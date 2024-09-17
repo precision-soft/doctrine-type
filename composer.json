@@ -1,0 +1,53 @@
+{
+    "name": "precision-soft/doctrine-type",
+    "type": "library",
+    "version": "v1.0.0",
+    "description": "doctrine custom types",
+    "keywords": [
+        "doctrine",
+        "type"
+    ],
+    "homepage": "https://gitlab.com/precision-soft-open-source/doctrine/type",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Adrian Jeledintan",
+            "email": "adrian.jeledintan@precision-soft.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "doctrine/dbal": "3.*"
+    },
+    "require-dev": {
+        "precision-soft/symfony-phpunit": "1.*",
+        "friendsofphp/php-cs-fixer": "3.*",
+        "squizlabs/php_codesniffer": "3.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "PrecisionSoft\\Doctrine\\Type\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PrecisionSoft\\Doctrine\\Type\\Test\\": "tests/"
+        }
+    },
+    "scripts": {
+        "install-hooks": [
+            "[ $COMPOSER_DEV_MODE -eq 1 ] && rm -rf .git/hooks && ln -s ../dev/git-hooks .git/hooks || exit 0"
+        ],
+        "post-install-cmd": [
+            "@install-hooks"
+        ],
+        "post-update-cmd": [
+            "@install-hooks"
+        ]
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true
+    }
+}
