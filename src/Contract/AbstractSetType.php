@@ -19,7 +19,7 @@ abstract class AbstractSetType extends AbstractType
     public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): ?string
     {
         if (null !== $value) {
-            $value = (array) $value;
+            $value = (array)$value;
 
             if (false === empty($diff = \array_diff($value, $this->getValues()))) {
                 throw new InvalidTypeValueException(

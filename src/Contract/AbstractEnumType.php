@@ -22,7 +22,7 @@ abstract class AbstractEnumType extends AbstractType
             return null;
         }
 
-        $value = (string) $value;
+        $value = (string)$value;
 
         if (false === \in_array($value, $this->getValues(), true)) {
             throw new InvalidTypeValueException(
@@ -40,7 +40,7 @@ abstract class AbstractEnumType extends AbstractType
 
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?string
     {
-        return (null === $value) ? null : (string) $value;
+        return (null === $value) ? null : (string)$value;
     }
 
     public function getSqlDeclaration(array $column, AbstractPlatform $platform): string
