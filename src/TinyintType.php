@@ -65,7 +65,7 @@ class TinyintType extends Type
         return null === $value ? null : (int)$value;
     }
 
-    public function getBindingType(): ParameterType
+    public function getBindingType(): int
     {
         return ParameterType::INTEGER;
     }
