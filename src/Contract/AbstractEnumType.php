@@ -10,37 +10,21 @@ namespace PrecisionSoft\Doctrine\Type\Contract;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
-use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
 
-abstract class AbstractEnumType extends AbstractType
+abstract class AbstractEnumType extends AbstractPhpEnumType
 {
-    abstract public function getValues(): array;
-
     public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): ?string
     {
         if (null === $value) {
             return null;
         }
 
-        $value = (string)$value;
-
-        if (false === \in_array($value, $this->getValues(), true)) {
-            throw new InvalidTypeValueException(
-                \sprintf(
-                    'invalid value `%s`, expected one of `%s`, for `%s`',
-                    $value,
-                    \implode(', ', $this->getValues()),
-                    $this->getName(),
-                ),
-            );
-        }
-
-        return $value;
+        return $this->convertValueToDatabase($value);
     }
 
-    public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?string
+    public function convertToPHPValue(mixed $value, AbstractPlatform $platform): mixed
     {
-        return (null === $value) ? null : (string)$value;
+        return (null === $value) ? null : $this->convertValueToPhp($value);
     }
 
     public function getSqlDeclaration(array $column, AbstractPlatform $platform): string
@@ -48,7 +32,9 @@ abstract class AbstractEnumType extends AbstractType
         $values = [];
 
         foreach ($this->getValues() as $value) {
-            $values[] = $platform->quoteStringLiteral($value);
+            $values[] = $platform->quoteStringLiteral(
+                $this->convertValueToDatabase($value)
+            );
         }
 
         if ($platform instanceof MySqlPlatform) {

@@ -10,37 +10,33 @@ namespace PrecisionSoft\Doctrine\Type\Contract;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MySqlPlatform;
-use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
 
-abstract class AbstractSetType extends AbstractType
+abstract class AbstractSetType extends AbstractPhpEnumType
 {
-    abstract public function getValues(): array;
-
-    public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): ?string
+    public function convertToDatabaseValue(mixed $values, AbstractPlatform $platform): ?string
     {
-        if (null !== $value) {
-            $value = (array)$value;
+        if (null !== $values) {
+            $values = (array)$values;
 
-            if (false === empty($diff = \array_diff($value, $this->getValues()))) {
-                throw new InvalidTypeValueException(
-                    \sprintf(
-                        'invalid value `%s`, expected one of `%s`, for `%s`',
-                        \implode(', ', $diff),
-                        \implode(', ', $this->getValues()),
-                        $this->getName(),
-                    ),
-                );
-            }
+            $values = array_map(
+                fn(mixed $value) => $this->convertValueToDatabase($value),
+                $values
+            );
 
-            $value = true === empty($value) ? null : \implode(',', $value);
+            $values = true === empty($values) ? null : \implode(',', $values);
         }
 
-        return (null === $value) ? null : $value;
+        return (null === $values) ? null : $values;
     }
 
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?array
     {
-        return true === empty($value) ? null : \explode(',', $value);
+        return true === empty($value)
+            ? null
+            : array_map(
+                fn(mixed $value) => $this->convertValueToPhp($value),
+                \explode(',', $value)
+            );
     }
 
     public function getSqlDeclaration(array $column, AbstractPlatform $platform): string
@@ -48,7 +44,9 @@ abstract class AbstractSetType extends AbstractType
         $values = [];
 
         foreach ($this->getValues() as $value) {
-            $values[] = $platform->quoteStringLiteral($value);
+            $values[] = $platform->quoteStringLiteral(
+                $this->convertValueToDatabase($value)
+            );
         }
 
         if ($platform instanceof MySqlPlatform) {

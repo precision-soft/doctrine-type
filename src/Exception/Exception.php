@@ -8,4 +8,6 @@ declare(strict_types=1);
 
 namespace PrecisionSoft\Doctrine\Type\Exception;
 
-class Exception extends \Exception {}
+class Exception extends \Exception
+{
+}
