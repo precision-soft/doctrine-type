@@ -33,7 +33,7 @@ abstract class AbstractEnumType extends AbstractPhpEnumType
 
         foreach ($this->getValues() as $value) {
             $values[] = $platform->quoteStringLiteral(
-                $this->convertValueToDatabase($value)
+                $this->convertValueToDatabase($value),
             );
         }
 

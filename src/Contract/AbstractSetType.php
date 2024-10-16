@@ -20,7 +20,7 @@ abstract class AbstractSetType extends AbstractPhpEnumType
 
             $values = array_map(
                 fn(mixed $value) => $this->convertValueToDatabase($value),
-                $values
+                $values,
             );
 
             $values = true === empty($values) ? null : \implode(',', $values);
@@ -35,7 +35,7 @@ abstract class AbstractSetType extends AbstractPhpEnumType
             ? null
             : array_map(
                 fn(mixed $value) => $this->convertValueToPhp($value),
-                \explode(',', $value)
+                \explode(',', $value),
             );
     }
 
@@ -45,7 +45,7 @@ abstract class AbstractSetType extends AbstractPhpEnumType
 
         foreach ($this->getValues() as $value) {
             $values[] = $platform->quoteStringLiteral(
-                $this->convertValueToDatabase($value)
+                $this->convertValueToDatabase($value),
             );
         }
 

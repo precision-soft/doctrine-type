@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+/*
+ * Copyright (c) Precision Soft
+ */
+
 namespace PrecisionSoft\Doctrine\Type\Contract;
 
 use BackedEnum;
@@ -24,7 +28,7 @@ abstract class AbstractPhpEnumType extends AbstractType
         }
 
         throw new Exception(
-            sprintf('you must use the enum class or implement `%s` for type `%s`', __FUNCTION__, static::getDefaultName())
+            sprintf('you must use the enum class or implement `%s` for type `%s`', __FUNCTION__, static::getDefaultName()),
         );
     }
 
@@ -70,7 +74,7 @@ abstract class AbstractPhpEnumType extends AbstractType
 
         if (EnumType::notEnum === $enumType) {
             throw new Exception(
-                sprintf('invalid enum class for type `%s`', static::getDefaultName())
+                sprintf('invalid enum class for type `%s`', static::getDefaultName()),
             );
         }
 
@@ -93,7 +97,7 @@ abstract class AbstractPhpEnumType extends AbstractType
 
         if (false === class_exists($className) || false === enum_exists($className)) {
             throw new Exception(
-                sprintf('enum class `%s` does not exist for type `%s`', $className, static::getDefaultName())
+                sprintf('enum class `%s` does not exist for type `%s`', $className, static::getDefaultName()),
             );
         }
 
@@ -119,7 +123,7 @@ abstract class AbstractPhpEnumType extends AbstractType
         }
 
         throw new InvalidTypeValueException(
-            sprintf('invalid enum value `%s` for type `%s`', $value, static::getDefaultName())
+            sprintf('invalid enum value `%s` for type `%s`', $value, static::getDefaultName()),
         );
     }
 
@@ -134,7 +138,7 @@ abstract class AbstractPhpEnumType extends AbstractType
         }
 
         throw new InvalidTypeValueException(
-            sprintf('invalid enum value `%s` for type `%s`', $value, static::getDefaultName())
+            sprintf('invalid enum value `%s` for type `%s`', $value, static::getDefaultName()),
         );
     }
 }
