@@ -45,13 +45,26 @@ abstract class AbstractPhpEnumType extends AbstractType
     {
         $enumType = $this->getEnumType();
 
-        return match ($enumType) {
-            EnumType::notEnum => $value,
+        switch ($enumType) {
+            case EnumType::notEnum:
+                return $value;
             /** @var UnitEnum $value */
-            EnumType::simple => $value->name,
+            case   EnumType::simple :
+                if ($value instanceof UnitEnum) {
+                    return $value->name;
+                }
+                break;
             /** @var BackedEnum $value */
-            EnumType::backed => $value->value,
+            case  EnumType::backed:
+                if ($value instanceof BackedEnum) {
+                    return $value->value;
+                }
+                break;
         };
+
+        throw new InvalidTypeValueException(
+            sprintf('invalid value for type `%s`', static::getDefaultName()),
+        );
     }
 
     public function convertValueToPhp(mixed $value): mixed
