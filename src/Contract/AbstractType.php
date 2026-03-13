@@ -14,9 +14,9 @@ use ReflectionClass;
 abstract class AbstractType extends Type
 {
     /**
-     * can be used if you have multiple databases,
-     * with entities that have the same name,
-     * to easily have distinct types, by using the entity manager name as a prefix
+     * Can be used if you have multiple databases with entities that have the
+     * same name, to easily have distinct types by using the entity manager
+     * name as a prefix.
      */
     public static function getDefaultNamePrefix(): ?string
     {

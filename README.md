@@ -1,13 +1,13 @@
 # Doctrine type
 
-**You may fork and modify it as you wish**.
+You may fork and modify it as you wish.
 
 Any suggestions are welcomed.
 
 ## Usage
 
-* extend **\PrecisionSoft\Doctrine\Type\Contract\AbstractEnumType** for enums.
-* extend **\PrecisionSoft\Doctrine\Type\Contract\AbstractSetType** for sets.
+- extend `\PrecisionSoft\Doctrine\Type\Contract\AbstractEnumType` for enums.
+- extend `\PrecisionSoft\Doctrine\Type\Contract\AbstractSetType` for sets.
 
 ### Symfony
 
@@ -30,7 +30,7 @@ doctrine:
 
 ## Todo
 
-* Unit tests.
+- Unit tests.
 
 ## Dev
 

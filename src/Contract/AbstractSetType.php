@@ -9,7 +9,7 @@ declare(strict_types=1);
 namespace PrecisionSoft\Doctrine\Type\Contract;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Platforms\MySqlPlatform;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 
 abstract class AbstractSetType extends AbstractPhpEnumType
 {
@@ -17,16 +17,14 @@ abstract class AbstractSetType extends AbstractPhpEnumType
     {
         if (null !== $values) {
             $values = (array)$values;
-
             $values = array_map(
-                fn(mixed $value) => $this->convertValueToDatabase($value),
+                fn(mixed $value): mixed => $this->convertValueToDatabase($value),
                 $values,
             );
-
-            $values = true === empty($values) ? null : \implode(',', $values);
+            $values = true === empty($values) ? null : implode(',', $values);
         }
 
-        return (null === $values) ? null : $values;
+        return null === $values ? null : $values;
     }
 
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?array
@@ -34,8 +32,8 @@ abstract class AbstractSetType extends AbstractPhpEnumType
         return true === empty($value)
             ? null
             : array_map(
-                fn(mixed $value) => $this->convertValueToPhp($value),
-                \explode(',', $value),
+                fn(mixed $item): mixed => $this->convertValueToPhp($item),
+                explode(',', $value),
             );
     }
 
@@ -49,8 +47,8 @@ abstract class AbstractSetType extends AbstractPhpEnumType
             );
         }
 
-        if ($platform instanceof MySqlPlatform) {
-            return 'SET(' . \implode(',', $values) . ')';
+        if (true === $platform instanceof MySQLPlatform) {
+            return 'SET(' . implode(',', $values) . ')';
         }
 
         return $platform->getIntegerTypeDeclarationSQL($column);

@@ -9,17 +9,19 @@ declare(strict_types=1);
 namespace PrecisionSoft\Doctrine\Type;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Platforms\MySqlPlatform;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
+use Doctrine\DBAL\Types\DateTimeType as DoctrineDateTimeType;
 
-class DateTimeType extends \Doctrine\DBAL\Types\DateTimeType
+class DateTimeType extends DoctrineDateTimeType
 {
-    public function getSQLDeclaration(
-        array $column,
-        AbstractPlatform $platform,
-    ): string {
+    public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
+    {
         $sqlDeclaration = parent::getSQLDeclaration($column, $platform);
 
-        if (($platform instanceof MySqlPlatform) === true && false === empty($column['update'])) {
+        if (
+            true === $platform instanceof MySQLPlatform
+            && false === empty($column['update'])
+        ) {
             return $sqlDeclaration . ' ON UPDATE CURRENT_TIMESTAMP';
         }
 

@@ -10,7 +10,7 @@ namespace PrecisionSoft\Doctrine\Type;
 
 use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Platforms\MySqlPlatform;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Types\Type;
 use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
@@ -26,13 +26,16 @@ class TinyintType extends Type
 
     public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
-        if (false === ($platform instanceof MySQLPlatform)) {
+        if (false === $platform instanceof MySQLPlatform) {
             throw new Exception('this type only support mysql');
         }
 
-        $unsigned = ($column['unsigned'] ?? false) === true ? ' UNSIGNED' : '';
+        $unsigned = true === ($column['unsigned'] ?? false) ? ' UNSIGNED' : '';
 
-        if (true === isset($column['length']) && is_numeric($column['length'])) {
+        if (
+            true === isset($column['length'])
+            && true === is_numeric($column['length'])
+        ) {
             $sqlDeclaration = sprintf('tinyint(%d)', $column['length']);
         } else {
             $sqlDeclaration = 'tinyint';
@@ -41,26 +44,32 @@ class TinyintType extends Type
         return $sqlDeclaration . $unsigned;
     }
 
-    public function convertToDatabaseValue($value, AbstractPlatform $platform): int|string|null
+    public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): int|string|null
     {
         if (null === $value) {
             return null;
         }
 
-        if (is_int($value)) {
+        if (true === is_int($value)) {
             return $value;
         }
 
-        if (is_string($value) && preg_match('/^-?\d+$/', $value)) {
+        if (
+            true === is_string($value)
+            && 1 === preg_match('/^-?\d+$/', $value)
+        ) {
             return $value;
         }
 
         throw new InvalidTypeValueException(
-            sprintf('expected integer and got `%s`', is_object($value) ? get_class($value) : gettype($value)),
+            sprintf(
+                'expected integer and got `%s`',
+                true === is_object($value) ? get_class($value) : gettype($value),
+            ),
         );
     }
 
-    public function convertToPHPValue($value, AbstractPlatform $platform): ?int
+    public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?int
     {
         return null === $value ? null : (int)$value;
     }

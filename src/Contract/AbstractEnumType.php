@@ -9,7 +9,7 @@ declare(strict_types=1);
 namespace PrecisionSoft\Doctrine\Type\Contract;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Platforms\MySqlPlatform;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
 
 abstract class AbstractEnumType extends AbstractPhpEnumType
 {
@@ -24,7 +24,7 @@ abstract class AbstractEnumType extends AbstractPhpEnumType
 
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): mixed
     {
-        return (null === $value) ? null : $this->convertValueToPhp($value);
+        return null === $value ? null : $this->convertValueToPhp($value);
     }
 
     public function getSqlDeclaration(array $column, AbstractPlatform $platform): string
@@ -37,8 +37,8 @@ abstract class AbstractEnumType extends AbstractPhpEnumType
             );
         }
 
-        if ($platform instanceof MySqlPlatform) {
-            return 'ENUM(' . \implode(',', $values) . ')';
+        if (true === $platform instanceof MySQLPlatform) {
+            return 'ENUM(' . implode(',', $values) . ')';
         }
 
         return $platform->getIntegerTypeDeclarationSQL($column);
