@@ -20,7 +20,7 @@ class DateTimeType extends DoctrineDateTimeType
 
         if (
             true === $platform instanceof MySQLPlatform
-            && false === empty($column['update'])
+            && true === isset($column['update']) && '' !== $column['update'] && null !== $column['update']
         ) {
             return $sqlDeclaration . ' ON UPDATE CURRENT_TIMESTAMP';
         }

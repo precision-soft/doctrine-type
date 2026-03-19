@@ -24,12 +24,12 @@ abstract class AbstractSetType extends AbstractPhpEnumType
             (array)$values,
         );
 
-        return true === empty($converted) ? null : implode(',', $converted);
+        return 0 === count($converted) ? null : implode(',', $converted);
     }
 
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?array
     {
-        return true === empty($value)
+        return null === $value || '' === $value
             ? null
             : array_map(
                 fn(mixed $item): mixed => $this->convertValueToPhp($item),
@@ -37,7 +37,7 @@ abstract class AbstractSetType extends AbstractPhpEnumType
             );
     }
 
-    public function getSqlDeclaration(array $column, AbstractPlatform $platform): string
+    public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
         $values = [];
 

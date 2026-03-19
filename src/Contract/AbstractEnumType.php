@@ -27,7 +27,7 @@ abstract class AbstractEnumType extends AbstractPhpEnumType
         return null === $value ? null : $this->convertValueToPhp($value);
     }
 
-    public function getSqlDeclaration(array $column, AbstractPlatform $platform): string
+    public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
         $values = [];
 
