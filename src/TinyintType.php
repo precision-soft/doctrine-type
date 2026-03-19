@@ -11,13 +11,18 @@ namespace PrecisionSoft\Doctrine\Type;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
-use Doctrine\DBAL\Types\Type;
+use PrecisionSoft\Doctrine\Type\Contract\AbstractType;
 use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
 
-class TinyintType extends Type
+class TinyintType extends AbstractType
 {
     public const TINYINT = 'tinyint';
+
+    public static function getDefaultName(): string
+    {
+        return self::TINYINT;
+    }
 
     public function getName(): string
     {
@@ -32,16 +37,7 @@ class TinyintType extends Type
 
         $unsigned = true === ($column['unsigned'] ?? false) ? ' UNSIGNED' : '';
 
-        if (
-            true === isset($column['length'])
-            && true === is_numeric($column['length'])
-        ) {
-            $sqlDeclaration = sprintf('tinyint(%d)', $column['length']);
-        } else {
-            $sqlDeclaration = 'tinyint';
-        }
-
-        return $sqlDeclaration . $unsigned;
+        return 'tinyint' . $unsigned;
     }
 
     public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): int|string|null

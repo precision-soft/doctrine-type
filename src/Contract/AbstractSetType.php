@@ -15,16 +15,16 @@ abstract class AbstractSetType extends AbstractPhpEnumType
 {
     public function convertToDatabaseValue(mixed $values, AbstractPlatform $platform): ?string
     {
-        if (null !== $values) {
-            $values = (array)$values;
-            $values = array_map(
-                fn(mixed $value): mixed => $this->convertValueToDatabase($value),
-                $values,
-            );
-            $values = true === empty($values) ? null : implode(',', $values);
+        if (null === $values) {
+            return null;
         }
 
-        return null === $values ? null : $values;
+        $converted = array_map(
+            fn(mixed $value): mixed => $this->convertValueToDatabase($value),
+            (array)$values,
+        );
+
+        return true === empty($converted) ? null : implode(',', $converted);
     }
 
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?array

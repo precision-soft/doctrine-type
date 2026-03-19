@@ -13,7 +13,7 @@ use Doctrine\DBAL\Platforms\MySQLPlatform;
 
 abstract class AbstractEnumType extends AbstractPhpEnumType
 {
-    public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): ?string
+    public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): mixed
     {
         if (null === $value) {
             return null;
