@@ -10,6 +10,7 @@ namespace PrecisionSoft\Doctrine\Type\Contract;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
+use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
 
 abstract class AbstractSetType extends AbstractPhpEnumType
 {
@@ -20,7 +21,17 @@ abstract class AbstractSetType extends AbstractPhpEnumType
         }
 
         $converted = array_map(
-            fn(mixed $value): mixed => $this->convertValueToDatabase($value),
+            function (mixed $value): mixed {
+                $dbValue = $this->convertValueToDatabase($value);
+
+                if (true === is_string($dbValue) && false !== strpos($dbValue, ',')) {
+                    throw new InvalidTypeValueException(
+                        sprintf('set value `%s` must not contain a comma', $dbValue),
+                    );
+                }
+
+                return $dbValue;
+            },
             (array)$values,
         );
 

@@ -30,8 +30,6 @@ doctrine:
 
 ## Todo
 
-- Unit tests.
-
 ## Dev
 
 ```shell

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1b0c1bfa66ff7bd92e89c1e7d7bcbf09",
+    "content-hash": "6e2d3fb952f083f6e27a59ddaeff4967",
     "packages": [
         {
             "name": "doctrine/dbal",
@@ -895,16 +895,16 @@
         },
         {
             "name": "precision-soft/symfony-phpunit",
-            "version": "v1.1.0",
+            "version": "v1.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/precision-soft/symfony-phpunit.git",
-                "reference": "eb8cb7f9fd1275084b50192bf279685ad504b319"
+                "reference": "0cc14990f28519ccf32eb95d90678b45c315f817"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/precision-soft/symfony-phpunit/zipball/eb8cb7f9fd1275084b50192bf279685ad504b319",
-                "reference": "eb8cb7f9fd1275084b50192bf279685ad504b319",
+                "url": "https://api.github.com/repos/precision-soft/symfony-phpunit/zipball/0cc14990f28519ccf32eb95d90678b45c315f817",
+                "reference": "0cc14990f28519ccf32eb95d90678b45c315f817",
                 "shasum": ""
             },
             "require": {
@@ -936,7 +936,7 @@
                 }
             ],
             "description": "library used to make writing phpunit tests easier",
-            "homepage": "https://gitlab.com/precision-soft-open-source/symfony/phpunit",
+            "homepage": "https://github.com/precision-soft/symfony-phpunit",
             "keywords": [
                 "mockery",
                 "phpunit",
@@ -944,9 +944,9 @@
             ],
             "support": {
                 "issues": "https://github.com/precision-soft/symfony-phpunit/issues",
-                "source": "https://github.com/precision-soft/symfony-phpunit/tree/v1.1.0"
+                "source": "https://github.com/precision-soft/symfony-phpunit/tree/v1.1.2"
             },
-            "time": "2026-03-18T15:31:46+00:00"
+            "time": "2026-03-19T14:55:41+00:00"
         },
         {
             "name": "psr/container",

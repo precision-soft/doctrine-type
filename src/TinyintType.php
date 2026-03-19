@@ -47,6 +47,8 @@ class TinyintType extends AbstractType
         }
 
         if (true === is_int($value)) {
+            $this->validateRange($value);
+
             return $value;
         }
 
@@ -54,6 +56,8 @@ class TinyintType extends AbstractType
             true === is_string($value)
             && 1 === preg_match('/^-?\d+$/', $value)
         ) {
+            $this->validateRange((int)$value);
+
             return $value;
         }
 
@@ -63,6 +67,15 @@ class TinyintType extends AbstractType
                 true === is_object($value) ? get_class($value) : gettype($value),
             ),
         );
+    }
+
+    private function validateRange(int $value): void
+    {
+        if ($value < -128 || $value > 255) {
+            throw new InvalidTypeValueException(
+                sprintf('value `%d` is out of tinyint range (-128 to 255)', $value),
+            );
+        }
     }
 
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?int
