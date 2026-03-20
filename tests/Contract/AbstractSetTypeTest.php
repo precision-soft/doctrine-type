@@ -156,4 +156,63 @@ class AbstractSetTypeTest extends TestCase
 
         $type->convertToPHPValue('nonexistent', $this->platform);
     }
+
+    public function testConvertToDatabaseValueFiltersNullValues(): void
+    {
+        $type = new class extends \PrecisionSoft\Doctrine\Type\Contract\AbstractSetType {
+            public function getValues(): array
+            {
+                return ['valid', 'other'];
+            }
+
+            public function convertValueToDatabase(mixed $value): mixed
+            {
+                return $value;
+            }
+
+            public function convertValueToPhp(mixed $value): mixed
+            {
+                return $value;
+            }
+        };
+
+        $result = $type->convertToDatabaseValue([null, 'valid', null, 'other'], $this->platform);
+
+        self::assertSame('valid,other', $result);
+    }
+
+    public function testConvertToDatabaseValueAllNullsReturnsNull(): void
+    {
+        $type = new class extends \PrecisionSoft\Doctrine\Type\Contract\AbstractSetType {
+            public function getValues(): array
+            {
+                return ['valid'];
+            }
+
+            public function convertValueToDatabase(mixed $value): mixed
+            {
+                return $value;
+            }
+
+            public function convertValueToPhp(mixed $value): mixed
+            {
+                return $value;
+            }
+        };
+
+        $result = $type->convertToDatabaseValue([null, null], $this->platform);
+
+        self::assertNull($result);
+    }
+
+    public function testConvertToDatabaseValueDuplicateBackedEnums(): void
+    {
+        $type = new TestBackedSetType();
+        $result = $type->convertToDatabaseValue(
+            [TestBackedEnum::first, TestBackedEnum::first, TestBackedEnum::second],
+            $this->platform,
+        );
+
+        self::assertSame('first_value,first_value,second_value', $result);
+    }
 }

@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6e2d3fb952f083f6e27a59ddaeff4967",
+    "content-hash": "aca8ac30b1a82cf1facc6a2b6c1b28c6",
     "packages": [
         {
             "name": "doctrine/dbal",
-            "version": "4.4.2",
+            "version": "4.4.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/dbal.git",
-                "reference": "476f7f0fa6ea4aa5364926db7fabdf6049075722"
+                "reference": "61e730f1658814821a85f2402c945f3883407dec"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/dbal/zipball/476f7f0fa6ea4aa5364926db7fabdf6049075722",
-                "reference": "476f7f0fa6ea4aa5364926db7fabdf6049075722",
+                "url": "https://api.github.com/repos/doctrine/dbal/zipball/61e730f1658814821a85f2402c945f3883407dec",
+                "reference": "61e730f1658814821a85f2402c945f3883407dec",
                 "shasum": ""
             },
             "require": {
@@ -94,7 +94,7 @@
             ],
             "support": {
                 "issues": "https://github.com/doctrine/dbal/issues",
-                "source": "https://github.com/doctrine/dbal/tree/4.4.2"
+                "source": "https://github.com/doctrine/dbal/tree/4.4.3"
             },
             "funding": [
                 {
@@ -110,7 +110,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-02-26T12:12:19+00:00"
+            "time": "2026-03-20T08:52:12+00:00"
         },
         {
             "name": "doctrine/deprecations",
@@ -895,16 +895,16 @@
         },
         {
             "name": "precision-soft/symfony-phpunit",
-            "version": "v1.1.2",
+            "version": "v1.1.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/precision-soft/symfony-phpunit.git",
-                "reference": "0cc14990f28519ccf32eb95d90678b45c315f817"
+                "reference": "af7f948ef93753370b414bdedb7a4201aa3912fa"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/precision-soft/symfony-phpunit/zipball/0cc14990f28519ccf32eb95d90678b45c315f817",
-                "reference": "0cc14990f28519ccf32eb95d90678b45c315f817",
+                "url": "https://api.github.com/repos/precision-soft/symfony-phpunit/zipball/af7f948ef93753370b414bdedb7a4201aa3912fa",
+                "reference": "af7f948ef93753370b414bdedb7a4201aa3912fa",
                 "shasum": ""
             },
             "require": {
@@ -944,9 +944,9 @@
             ],
             "support": {
                 "issues": "https://github.com/precision-soft/symfony-phpunit/issues",
-                "source": "https://github.com/precision-soft/symfony-phpunit/tree/v1.1.2"
+                "source": "https://github.com/precision-soft/symfony-phpunit/tree/v1.1.3"
             },
-            "time": "2026-03-19T14:55:41+00:00"
+            "time": "2026-03-20T21:22:05+00:00"
         },
         {
             "name": "psr/container",

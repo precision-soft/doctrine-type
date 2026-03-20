@@ -35,7 +35,12 @@ abstract class AbstractSetType extends AbstractPhpEnumType
             (array)$values,
         );
 
-        return 0 === count($converted) ? null : implode(',', $converted);
+        $filtered = array_filter(
+            $converted,
+            static fn(mixed $value): bool => null !== $value,
+        );
+
+        return 0 === count($filtered) ? null : implode(',', $filtered);
     }
 
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?array

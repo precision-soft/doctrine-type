@@ -28,12 +28,10 @@ doctrine:
             AcmeSet: \App\Doctrine\Type\AcmeSet
 ```
 
-## Todo
-
 ## Dev
 
 ```shell
-git clone git@gitlab.com:precision-soft-open-source/doctrine/type.git
+git clone git@github.com:precision-soft/doctrine-type.git
 cd type
 
 ./dc build && ./dc up -d
