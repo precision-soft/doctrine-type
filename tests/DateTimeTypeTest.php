@@ -10,57 +10,64 @@ namespace PrecisionSoft\Doctrine\Type\Test;
 
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
-use PHPUnit\Framework\TestCase;
 use PrecisionSoft\Doctrine\Type\DateTimeType;
+use PrecisionSoft\Symfony\Phpunit\MockDto;
+use PrecisionSoft\Symfony\Phpunit\TestCase\AbstractTestCase;
+use stdClass;
 
-class DateTimeTypeTest extends TestCase
+class DateTimeTypeTest extends AbstractTestCase
 {
-    private DateTimeType $type;
-    private MySQLPlatform $platform;
+    private DateTimeType $dateTimeType;
+    private MySQLPlatform $mysqlPlatform;
+
+    public static function getMockDto(): MockDto
+    {
+        return new MockDto(stdClass::class);
+    }
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->type = new DateTimeType();
-        $this->platform = new MySQLPlatform();
+        $this->dateTimeType = new DateTimeType();
+        $this->mysqlPlatform = new MySQLPlatform();
     }
 
     public function testGetSqlDeclarationDefault(): void
     {
-        $result = $this->type->getSQLDeclaration([], $this->platform);
+        $sqlDeclaration = $this->dateTimeType->getSQLDeclaration([], $this->mysqlPlatform);
 
-        self::assertSame('DATETIME', $result);
+        self::assertSame('DATETIME', $sqlDeclaration);
     }
 
     public function testGetSqlDeclarationWithUpdateMysql(): void
     {
-        $result = $this->type->getSQLDeclaration(['update' => 'CURRENT_TIMESTAMP'], $this->platform);
+        $sqlDeclaration = $this->dateTimeType->getSQLDeclaration(['update' => true], $this->mysqlPlatform);
 
-        self::assertSame('DATETIME ON UPDATE CURRENT_TIMESTAMP', $result);
+        self::assertSame('DATETIME ON UPDATE CURRENT_TIMESTAMP', $sqlDeclaration);
     }
 
     public function testGetSqlDeclarationWithEmptyUpdateMysql(): void
     {
-        $result = $this->type->getSQLDeclaration(['update' => ''], $this->platform);
+        $sqlDeclaration = $this->dateTimeType->getSQLDeclaration(['update' => ''], $this->mysqlPlatform);
 
-        self::assertSame('DATETIME', $result);
+        self::assertSame('DATETIME', $sqlDeclaration);
     }
 
     public function testGetSqlDeclarationWithNullUpdateMysql(): void
     {
-        $result = $this->type->getSQLDeclaration(['update' => null], $this->platform);
+        $sqlDeclaration = $this->dateTimeType->getSQLDeclaration(['update' => null], $this->mysqlPlatform);
 
-        self::assertSame('DATETIME', $result);
+        self::assertSame('DATETIME', $sqlDeclaration);
     }
 
     public function testGetSqlDeclarationWithUpdateNonMysql(): void
     {
-        $result = $this->type->getSQLDeclaration(
+        $sqlDeclaration = $this->dateTimeType->getSQLDeclaration(
             ['update' => 'CURRENT_TIMESTAMP'],
             new PostgreSQLPlatform(),
         );
 
-        self::assertStringNotContainsString('ON UPDATE', $result);
+        self::assertStringNotContainsString('ON UPDATE', $sqlDeclaration);
     }
 }

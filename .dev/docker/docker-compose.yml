@@ -8,7 +8,7 @@ services:
                 USER_ID: ${USER_ID}
                 GROUP_ID: ${GROUP_ID}
                 WORKDIR: ${CONTAINER_APP_PATH}
-                SETUP_SH_SOURCE: ${CONFIG_PATH}/setup.sh
+                ENTRYPOINT_SH_SOURCE: ${CONFIG_PATH}/entrypoint.sh
         privileged: true
         restart: unless-stopped
         volumes:

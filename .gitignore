@@ -4,3 +4,8 @@
 /.php-cs-fixer.cache
 /.phpcs-cache
 /.phpunit.result.cache
+/*.zip
+/*.tar.gz
+/.claude/
+/CLAUDE.md
+/AUDIT_REPORT.md

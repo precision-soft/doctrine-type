@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. "${PWD}/dev/utility.sh"
+. "${PWD}/.dev/utility.sh"
 
 stop() {
     if [[ "$2" != "" ]]; then
@@ -42,19 +42,6 @@ lint() {
     print_command "end php lint"
 }
 
-code_sniffer() {
-    print_command "start code sniffer"
-    println ""
-
-    run_in_container_dev ./vendor/bin/phpcs --no-cache --encoding=utf-8 -n -p -v -s $1
-
-    if [[ $? != 0 ]]; then
-        print_error "fix the errors before commit"
-    fi
-
-    print_command "end code sniffer"
-}
-
 php_unit() {
     print_command "start php unit"
     println ""
@@ -63,9 +50,25 @@ php_unit() {
 
     if [[ $? != 0 ]]; then
         print_error "fix the errors before commit"
+        stop 1
     fi
 
     print_command "end php unit"
+}
+
+phpstan() {
+    print_command "start phpstan"
+    println ""
+
+    run_in_container_dev ./vendor/bin/phpstan analyse
+
+    if [[ $? != 0 ]]; then
+        print_error "fix the errors before commit"
+        stop 1
+    fi
+
+    println ""
+    print_command "end phpstan"
 }
 
 php_cs_fixer() {
@@ -125,6 +128,10 @@ if [[ "${STAGED_FILES_PHP}" != "" ]]; then
     println ""
 
     php_unit "${STAGED_FILES}"
+
+    println ""
+
+    phpstan
 fi
 
 println ""

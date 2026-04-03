@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace PrecisionSoft\Doctrine\Type\Contract;
 
+use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 use ReflectionClass;
 
@@ -26,5 +27,10 @@ abstract class AbstractType extends Type
     public static function getDefaultName(): string
     {
         return (static::getDefaultNamePrefix() ?? '') . (new ReflectionClass(static::class))->getShortName();
+    }
+
+    public function requiresSQLCommentHint(AbstractPlatform $platform): bool
+    {
+        return true;
     }
 }

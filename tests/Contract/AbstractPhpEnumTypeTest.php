@@ -8,105 +8,131 @@ declare(strict_types=1);
 
 namespace PrecisionSoft\Doctrine\Type\Test\Contract;
 
-use PHPUnit\Framework\TestCase;
+use Doctrine\DBAL\Platforms\MySQLPlatform;
+use PrecisionSoft\Doctrine\Type\Contract\AbstractEnumType;
+use PrecisionSoft\Doctrine\Type\Contract\AbstractPhpEnumType;
 use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedEnum;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedEnumType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnum;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnumType;
+use PrecisionSoft\Symfony\Phpunit\MockDto;
+use PrecisionSoft\Symfony\Phpunit\TestCase\AbstractTestCase;
+use stdClass;
 
-class AbstractPhpEnumTypeTest extends TestCase
+class AbstractPhpEnumTypeTest extends AbstractTestCase
 {
-    public function testBackedEnumConvertValueToDatabase(): void
-    {
-        $type = new TestBackedEnumType();
-        $result = $type->convertValueToDatabase(TestBackedEnum::second);
+    private MySQLPlatform $mysqlPlatform;
 
-        self::assertSame('second_value', $result);
+    public static function getMockDto(): MockDto
+    {
+        return new MockDto(stdClass::class);
     }
 
-    public function testBackedEnumConvertValueToDatabaseInvalidThrows(): void
+    protected function setUp(): void
     {
-        $type = new TestBackedEnumType();
+        parent::setUp();
+
+        $this->mysqlPlatform = new MySQLPlatform();
+    }
+
+    protected function tearDown(): void
+    {
+        AbstractPhpEnumType::clearCache();
+
+        parent::tearDown();
+    }
+
+    public function testBackedEnumConvertToDatabaseValue(): void
+    {
+        $testBackedEnumType = new TestBackedEnumType();
+        $databaseValue = $testBackedEnumType->convertToDatabaseValue(TestBackedEnum::second, $this->mysqlPlatform);
+
+        self::assertSame('second_value', $databaseValue);
+    }
+
+    public function testBackedEnumConvertToDatabaseValueInvalidThrows(): void
+    {
+        $testBackedEnumType = new TestBackedEnumType();
 
         $this->expectException(InvalidTypeValueException::class);
 
-        $type->convertValueToDatabase('not_an_enum');
+        $testBackedEnumType->convertToDatabaseValue('not_an_enum', $this->mysqlPlatform);
     }
 
-    public function testSimpleEnumConvertValueToDatabase(): void
+    public function testSimpleEnumConvertToDatabaseValue(): void
     {
-        $type = new TestSimpleEnumType();
-        $result = $type->convertValueToDatabase(TestSimpleEnum::beta);
+        $testSimpleEnumType = new TestSimpleEnumType();
+        $databaseValue = $testSimpleEnumType->convertToDatabaseValue(TestSimpleEnum::beta, $this->mysqlPlatform);
 
-        self::assertSame('beta', $result);
+        self::assertSame('beta', $databaseValue);
     }
 
-    public function testSimpleEnumConvertValueToDatabaseInvalidThrows(): void
+    public function testSimpleEnumConvertToDatabaseValueInvalidThrows(): void
     {
-        $type = new TestSimpleEnumType();
+        $testSimpleEnumType = new TestSimpleEnumType();
 
         $this->expectException(InvalidTypeValueException::class);
 
-        $type->convertValueToDatabase('not_an_enum');
+        $testSimpleEnumType->convertToDatabaseValue('not_an_enum', $this->mysqlPlatform);
     }
 
-    public function testBackedEnumConvertValueToPhp(): void
+    public function testBackedEnumConvertToPhpValue(): void
     {
-        $type = new TestBackedEnumType();
-        $result = $type->convertValueToPhp('second_value');
+        $testBackedEnumType = new TestBackedEnumType();
+        $phpValue = $testBackedEnumType->convertToPHPValue('second_value', $this->mysqlPlatform);
 
-        self::assertSame(TestBackedEnum::second, $result);
+        self::assertSame(TestBackedEnum::second, $phpValue);
     }
 
-    public function testBackedEnumConvertValueToPhpInvalidThrows(): void
+    public function testBackedEnumConvertToPhpValueInvalidThrows(): void
     {
-        $type = new TestBackedEnumType();
+        $testBackedEnumType = new TestBackedEnumType();
 
         $this->expectException(InvalidTypeValueException::class);
 
-        $type->convertValueToPhp('nonexistent');
+        $testBackedEnumType->convertToPHPValue('nonexistent', $this->mysqlPlatform);
     }
 
-    public function testSimpleEnumConvertValueToPhp(): void
+    public function testSimpleEnumConvertToPhpValue(): void
     {
-        $type = new TestSimpleEnumType();
-        $result = $type->convertValueToPhp('beta');
+        $testSimpleEnumType = new TestSimpleEnumType();
+        $phpValue = $testSimpleEnumType->convertToPHPValue('beta', $this->mysqlPlatform);
 
-        self::assertSame(TestSimpleEnum::beta, $result);
+        self::assertSame(TestSimpleEnum::beta, $phpValue);
     }
 
-    public function testSimpleEnumConvertValueToPhpInvalidThrows(): void
+    public function testSimpleEnumConvertToPhpValueInvalidThrows(): void
     {
-        $type = new TestSimpleEnumType();
+        $testSimpleEnumType = new TestSimpleEnumType();
 
         $this->expectException(InvalidTypeValueException::class);
 
-        $type->convertValueToPhp('nonexistent');
+        $testSimpleEnumType->convertToPHPValue('nonexistent', $this->mysqlPlatform);
     }
 
     public function testGetEnumValues(): void
     {
-        $type = new TestBackedEnumType();
-        $values = $type->getValues();
+        $testBackedEnumType = new TestBackedEnumType();
+        $enumValues = $testBackedEnumType->getValues();
 
-        self::assertCount(3, $values);
+        self::assertCount(3, $enumValues);
     }
 
     public function testNoEnumClassGetValuesThrows(): void
     {
-        $type = new class extends \PrecisionSoft\Doctrine\Type\Contract\AbstractEnumType {};
+        $anonymousEnumType = new class extends AbstractEnumType {};
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('you must use the enum class');
 
-        $type->getValues();
+        $anonymousEnumType->getValues();
     }
 
     public function testInvalidEnumClassThrows(): void
     {
-        $type = new class extends \PrecisionSoft\Doctrine\Type\Contract\AbstractEnumType {
+        $anonymousEnumType = new class extends AbstractEnumType {
             public function getEnumClass(): string
             {
                 return 'NonExistentClass';
@@ -116,6 +142,104 @@ class AbstractPhpEnumTypeTest extends TestCase
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('does not exist');
 
-        $type->getValues();
+        $anonymousEnumType->getValues();
+    }
+
+    public function testNonEnumExistingClassThrows(): void
+    {
+        $anonymousEnumType = new class extends AbstractEnumType {
+            public function getEnumClass(): string
+            {
+                return stdClass::class;
+            }
+        };
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('does not exist');
+
+        $anonymousEnumType->getValues();
+    }
+
+    public function testClearCacheResetsEnumTypeCache(): void
+    {
+        $testBackedEnumType = new TestBackedEnumType();
+
+        $testBackedEnumType->getValues();
+
+        AbstractPhpEnumType::clearCache();
+
+        $enumValues = $testBackedEnumType->getValues();
+
+        self::assertCount(3, $enumValues);
+    }
+
+    public function testNotEnumConvertToDatabaseValuePassesThrough(): void
+    {
+        $anonymousEnumType = new class extends AbstractEnumType {};
+
+        $databaseValue = $anonymousEnumType->convertToDatabaseValue('raw_value', $this->mysqlPlatform);
+
+        self::assertSame('raw_value', $databaseValue);
+    }
+
+    public function testNotEnumConvertToPhpValuePassesThrough(): void
+    {
+        $anonymousEnumType = new class extends AbstractEnumType {};
+
+        $phpValue = $anonymousEnumType->convertToPHPValue('raw_value', $this->mysqlPlatform);
+
+        self::assertSame('raw_value', $phpValue);
+    }
+
+    public function testGetEnumValuesWithNotEnumThrows(): void
+    {
+        $anonymousEnumType = new class extends AbstractEnumType {
+            public function callGetEnumValues(): array
+            {
+                return $this->getEnumValues();
+            }
+        };
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('invalid enum class');
+
+        $anonymousEnumType->callGetEnumValues();
+    }
+
+    public function testEnumTypeCacheIsUsedOnSubsequentCalls(): void
+    {
+        $testBackedEnumType = new TestBackedEnumType();
+
+        $firstDatabaseValue = $testBackedEnumType->convertToDatabaseValue(TestBackedEnum::first, $this->mysqlPlatform);
+
+        $secondDatabaseValue = $testBackedEnumType->convertToDatabaseValue(TestBackedEnum::second, $this->mysqlPlatform);
+
+        self::assertSame('first_value', $firstDatabaseValue);
+        self::assertSame('second_value', $secondDatabaseValue);
+    }
+
+    public function testSimpleEnumGetEnumValues(): void
+    {
+        $testSimpleEnumType = new TestSimpleEnumType();
+        $enumValues = $testSimpleEnumType->getValues();
+
+        self::assertCount(3, $enumValues);
+        self::assertSame(TestSimpleEnum::alpha, $enumValues[0]);
+        self::assertSame(TestSimpleEnum::beta, $enumValues[1]);
+        self::assertSame(TestSimpleEnum::gamma, $enumValues[2]);
+    }
+
+    public function testGetEnumClassReturnsNullByDefault(): void
+    {
+        $anonymousEnumType = new class extends AbstractEnumType {};
+
+        self::assertNull($anonymousEnumType->getEnumClass());
+    }
+
+    public function testBackedEnumGetEnumClassReturnsClass(): void
+    {
+        $testBackedEnumType = new TestBackedEnumType();
+
+        self::assertSame(TestBackedEnum::class, $testBackedEnumType->getEnumClass());
     }
 }

@@ -12,7 +12,7 @@ else
     COLOR_RED=''
 fi
 
-DOCKER_PATH="dev/docker/"
+DOCKER_PATH=".dev/docker/"
 CONTAINER_DEV="dev"
 
 error() {
@@ -56,6 +56,7 @@ check_container() {
 
     if [[ $(docker_compose_no_log ps -q "${CONTAINER_NAME}") = "" ]]; then
         echo 1
+        return
     fi
 
     echo 0

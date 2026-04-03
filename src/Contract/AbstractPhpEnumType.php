@@ -24,9 +24,9 @@ abstract class AbstractPhpEnumType extends AbstractType
      */
     public function getValues(): array
     {
-        $enumClass = $this->getEnumClass();
+        $enumClassName = $this->getEnumClass();
 
-        if (null !== $enumClass) {
+        if (null !== $enumClassName) {
             return $this->getEnumValues();
         }
 
@@ -39,39 +39,40 @@ abstract class AbstractPhpEnumType extends AbstractType
         );
     }
 
-    /**
-     * The recommended way to use these types if you use a version of PHP with enums.
-     *
-     * @return class-string<UnitEnum>|class-string<BackedEnum>|null
-     */
+    /** @return class-string<UnitEnum>|class-string<BackedEnum>|null */
     public function getEnumClass(): ?string
     {
         return null;
     }
 
-    public function convertValueToDatabase(mixed $value): mixed
+    public static function clearCache(): void
+    {
+        self::$enumTypeCache = [];
+    }
+
+    protected function convertValueToDatabase(mixed $phpValue): mixed
     {
         return match ($this->getEnumType()) {
-            EnumType::notEnum => $value,
-            EnumType::simple => true === $value instanceof UnitEnum
-                ? $value->name
+            EnumType::notEnum => $phpValue,
+            EnumType::simple => true === $phpValue instanceof UnitEnum
+                ? $phpValue->name
                 : throw new InvalidTypeValueException(
                     sprintf('invalid value for type `%s`', static::getDefaultName()),
                 ),
-            EnumType::backed => true === $value instanceof BackedEnum
-                ? $value->value
+            EnumType::backed => true === $phpValue instanceof BackedEnum
+                ? $phpValue->value
                 : throw new InvalidTypeValueException(
                     sprintf('invalid value for type `%s`', static::getDefaultName()),
                 ),
         };
     }
 
-    public function convertValueToPhp(mixed $value): mixed
+    protected function convertValueToPhp(mixed $databaseValue): mixed
     {
         return match ($this->getEnumType()) {
-            EnumType::notEnum => $value,
-            EnumType::simple => $this->getEnumByName($value),
-            EnumType::backed => $this->getEnumByValue($value),
+            EnumType::notEnum => $databaseValue,
+            EnumType::simple => $this->getEnumByName($databaseValue),
+            EnumType::backed => $this->getEnumByValue($databaseValue),
         };
     }
 
@@ -88,71 +89,94 @@ abstract class AbstractPhpEnumType extends AbstractType
             );
         }
 
-        return $this->getEnumClass()::cases();
+        $enumClassName = $this->getEnumClass();
+
+        if (null === $enumClassName) {
+            throw new Exception(
+                sprintf('enum class is null for type `%s`', static::getDefaultName()),
+            );
+        }
+
+        return $enumClassName::cases();
     }
 
     private function getEnumType(): EnumType
     {
-        $class = static::class;
+        $calledClassName = static::class;
 
-        if (true === isset(self::$enumTypeCache[$class])) {
-            return self::$enumTypeCache[$class];
+        if (true === isset(self::$enumTypeCache[$calledClassName])) {
+            return self::$enumTypeCache[$calledClassName];
         }
 
-        $className = $this->getEnumClass();
+        $enumClassName = $this->getEnumClass();
 
-        if (null === $className) {
-            return self::$enumTypeCache[$class] = EnumType::notEnum;
+        if (null === $enumClassName) {
+            return self::$enumTypeCache[$calledClassName] = EnumType::notEnum;
         }
 
-        if (false === class_exists($className) || false === enum_exists($className)) {
+        if (false === enum_exists($enumClassName)) {
             throw new Exception(
                 sprintf(
                     'enum class `%s` does not exist for type `%s`',
-                    $className,
+                    $enumClassName,
                     static::getDefaultName(),
                 ),
             );
         }
 
-        return self::$enumTypeCache[$class] = true === is_a($className, BackedEnum::class, true)
+        return self::$enumTypeCache[$calledClassName] = true === is_a($enumClassName, BackedEnum::class, true)
             ? EnumType::backed
             : EnumType::simple;
     }
 
-    private function getEnumByName(mixed $value): mixed
+    private function getEnumByName(mixed $enumCaseName): mixed
     {
-        $className = $this->getEnumClass();
+        $enumClassName = $this->getEnumClass();
 
-        foreach ($className::cases() as $case) {
-            if ($value === $case->name) {
-                return $case;
+        if (null === $enumClassName) {
+            throw new Exception(
+                sprintf('enum class is null for type `%s`', static::getDefaultName()),
+            );
+        }
+
+        foreach ($enumClassName::cases() as $enumCase) {
+            if ($enumCase->name === $enumCaseName) {
+                return $enumCase;
             }
         }
 
         throw new InvalidTypeValueException(
             sprintf(
                 'invalid enum value `%s` for type `%s`',
-                $value,
+                $enumCaseName,
                 static::getDefaultName(),
             ),
         );
     }
 
-    private function getEnumByValue(mixed $value): mixed
+    private function getEnumByValue(mixed $backedEnumValue): mixed
     {
-        $case = $this->getEnumClass()::tryFrom($value);
+        $enumClassName = $this->getEnumClass();
 
-        if (null === $case) {
+        if (null === $enumClassName) {
+            throw new Exception(
+                sprintf('enum class is null for type `%s`', static::getDefaultName()),
+            );
+        }
+
+        /** @var class-string<BackedEnum> $enumClassName */
+        $enumCase = $enumClassName::tryFrom($backedEnumValue);
+
+        if (null === $enumCase) {
             throw new InvalidTypeValueException(
                 sprintf(
                     'invalid enum value `%s` for type `%s`',
-                    $value,
+                    $backedEnumValue,
                     static::getDefaultName(),
                 ),
             );
         }
 
-        return $case;
+        return $enumCase;
     }
 }

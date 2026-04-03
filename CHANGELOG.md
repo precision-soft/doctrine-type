@@ -1,0 +1,169 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [3.0.0] - 2026-04-03
+
+### Breaking Changes
+
+- `AbstractPhpEnumType::convertValueToDatabase()` visibility narrowed from `public` to `protected`
+- `AbstractPhpEnumType::convertValueToPhp()` visibility narrowed from `public` to `protected`
+- `TinyintType::convertToDatabaseValue()` return type narrowed from `int|string|null` to `?int` (numeric strings now return `int`)
+- `AbstractSetType::convertToDatabaseValue()` now throws `InvalidTypeValueException` when passed a non-array value (previously silently cast to array)
+- `DateTimeType` column option `update` now requires strict `true` (previously accepted any truthy value)
+- Removed `squizlabs/php_codesniffer` from dev dependencies
+- Renamed `phpunit.xml` to `phpunit.xml.dist`
+- Renamed dev directory from `dev/` to `.dev/`
+- Dropped Doctrine DBAL 3 support (requires DBAL 4)
+- Removed `TinyintType::getName()` (DBAL 3 compatibility method)
+
+### Fixed
+
+- `AbstractEnumType::getSQLDeclaration()` non-MySQL fallback uses `getStringTypeDeclarationSQL()` instead of incorrect `getIntegerTypeDeclarationSQL()`
+- `AbstractSetType::getSQLDeclaration()` same fix as above
+- `TinyintType::getSQLDeclaration()` throws `InvalidTypeValueException` instead of base `Exception` on non-MySQL platforms
+- `TinyintType::validateRange()` uses Yoda conditions
+
+### Added
+
+- `AbstractType::requiresSQLCommentHint()` returns `true` so Doctrine schema tools detect custom type changes
+- `AbstractSetType::convertToDatabaseValue()` deduplicates values with `array_unique()`
+- `AbstractSetType::convertToPHPValue()` `@return` PHPDoc with typed array
+- Null guards in `AbstractPhpEnumType` for `::cases()` and `::tryFrom()` calls
+- PHPStan level 8 with empty baseline (zero ignored errors)
+- `AbstractTypeTest`, `EnumTypeTest`, `ExceptionTest` test classes
+- `TestConcreteType`, `TestPrefixedType` test utilities
+- Type hierarchy section in README
+- Cache section in README
+- Security and troubleshooting guidance in README
+- Docker `entrypoint.sh` for dev container
+
+### Changed
+
+- All test classes extend `AbstractTestCase` from `precision-soft/symfony-phpunit`
+- Upgraded PHPStan from `^1.0` to `^2.0`
+- Replaced `php_codesniffer` with PHPStan for static analysis
+- Replaced `strpos()` with `str_contains()` in `AbstractSetType`
+- Replaced `class_exists()` + `enum_exists()` with `enum_exists()` only in `AbstractPhpEnumType::getEnumType()`
+- Removed `TinyintType::validateRange()` unused `$unsigned` parameter
+- Improved exception messages with context
+- Descriptive variable names across all source and test files (no generic `$value`, `$result`)
+
+### Removed
+
+- `squizlabs/php_codesniffer` dev dependency
+- `phpcs.xml` configuration file
+- `dev/docker/setup.sh` (replaced by `entrypoint.sh`)
+- All PHPStan baseline ignores (baseline is now empty)
+- Redundant PHPDoc comments
+
+## [2.2.3] - 2026-03-20
+
+### Fixed
+
+- Filter null values in `AbstractSetType::convertToDatabaseValue()`
+- Correct clone URL in README
+
+## [2.2.2] - 2026-03-19
+
+### Fixed
+
+- Add tinyint range validation in `TinyintType::convertToDatabaseValue()`
+- Add set value comma validation in `AbstractSetType::convertToDatabaseValue()`
+
+## [2.2.1] - 2026-03-19
+
+### Fixed
+
+- Correct `getSQLDeclaration` method name
+- Replace `empty()` with explicit comparisons
+
+### Changed
+
+- Update composer.json
+
+## [2.2.0] - 2026-03-19
+
+### Changed
+
+- Improve enum type handling with `EnumType` enum for type resolution
+- Modernize `TinyintType` with stricter validation
+
+## [2.1.0] - 2026-03-13
+
+### Changed
+
+- Normalize code style across all source files
+
+## [2.0.2] - 2024-11-24
+
+### Fixed
+
+- `AbstractPhpEnumType::convertValueToDatabase()` handling for non-backed enums
+
+## [2.0.1] - 2024-10-17
+
+### Fixed
+
+- `TinyintType::getBindingType()` return type
+
+## [2.0.0] - 2024-10-17
+
+### Added
+
+- Doctrine DBAL 4 support
+
+## [1.1.0] - 2024-10-16
+
+### Added
+
+- PHP enum support for `AbstractEnumType` and `AbstractSetType`
+- `AbstractType::getDefaultName()` and `getDefaultNamePrefix()`
+
+### Changed
+
+- Code reformatting
+
+## [1.0.1] - 2024-09-26
+
+### Fixed
+
+- `TinyintType::getBindingType()` return value
+- php-cs-fixer configuration
+
+## [1.0.0] - 2024-09-17
+
+### Added
+
+- `AbstractEnumType` for MySQL `ENUM` columns
+- `AbstractSetType` for MySQL `SET` columns
+- `DateTimeType` with `ON UPDATE CURRENT_TIMESTAMP` support
+- `TinyintType` for MySQL `TINYINT` columns
+- Project-specific exception hierarchy
+
+[3.0.0]: https://github.com/precision-soft/doctrine-type/compare/v2.2.3...v3.0.0
+
+[2.2.3]: https://github.com/precision-soft/doctrine-type/compare/v2.2.2...v2.2.3
+
+[2.2.2]: https://github.com/precision-soft/doctrine-type/compare/v2.2.1...v2.2.2
+
+[2.2.1]: https://github.com/precision-soft/doctrine-type/compare/v2.2.0...v2.2.1
+
+[2.2.0]: https://github.com/precision-soft/doctrine-type/compare/v2.1.0...v2.2.0
+
+[2.1.0]: https://github.com/precision-soft/doctrine-type/compare/v2.0.2...v2.1.0
+
+[2.0.2]: https://github.com/precision-soft/doctrine-type/compare/v2.0.1...v2.0.2
+
+[2.0.1]: https://github.com/precision-soft/doctrine-type/compare/v2.0.0...v2.0.1
+
+[2.0.0]: https://github.com/precision-soft/doctrine-type/compare/v1.1.0...v2.0.0
+
+[1.1.0]: https://github.com/precision-soft/doctrine-type/compare/v1.0.1...v1.1.0
+
+[1.0.1]: https://github.com/precision-soft/doctrine-type/compare/v1.0.0...v1.0.1
+
+[1.0.0]: https://github.com/precision-soft/doctrine-type/releases/tag/v1.0.0

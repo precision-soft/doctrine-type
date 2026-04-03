@@ -29,18 +29,18 @@ abstract class AbstractEnumType extends AbstractPhpEnumType
 
     public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
-        $values = [];
+        $quotedEnumValues = [];
 
-        foreach ($this->getValues() as $value) {
-            $values[] = $platform->quoteStringLiteral(
-                $this->convertValueToDatabase($value),
+        foreach ($this->getValues() as $enumCase) {
+            $quotedEnumValues[] = $platform->quoteStringLiteral(
+                $this->convertValueToDatabase($enumCase),
             );
         }
 
         if (true === $platform instanceof MySQLPlatform) {
-            return 'ENUM(' . implode(',', $values) . ')';
+            return 'ENUM(' . implode(',', $quotedEnumValues) . ')';
         }
 
-        return $platform->getIntegerTypeDeclarationSQL($column);
+        return $platform->getStringTypeDeclarationSQL($column);
     }
 }

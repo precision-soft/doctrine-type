@@ -1,13 +1,12 @@
 {
     "name": "precision-soft/doctrine-type",
     "type": "library",
-    "version": "v2.2.3",
     "description": "doctrine custom types",
     "keywords": [
         "doctrine",
         "type"
     ],
-    "homepage": "https://gitlab.com/precision-soft-open-source/doctrine/type",
+    "homepage": "https://github.com/precision-soft/doctrine-type",
     "license": "MIT",
     "authors": [
         {
@@ -17,12 +16,12 @@
     ],
     "require": {
         "php": ">=8.2",
-        "doctrine/dbal": "3.*||4.*"
+        "doctrine/dbal": "4.*"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "3.*",
-        "precision-soft/symfony-phpunit": "1.*",
-        "squizlabs/php_codesniffer": "3.*"
+        "phpstan/phpstan": "^2.0",
+        "precision-soft/symfony-phpunit": "2.*"
     },
     "autoload": {
         "psr-4": {
@@ -36,7 +35,7 @@
     },
     "scripts": {
         "install-hooks": [
-            "[ $COMPOSER_DEV_MODE -eq 1 ] && rm -rf .git/hooks && ln -s ../dev/git-hooks .git/hooks || exit 0"
+            "[ $COMPOSER_DEV_MODE -eq 1 ] && rm -rf .git/hooks && ln -s ../.dev/git-hooks .git/hooks || exit 0"
         ],
         "post-install-cmd": [
             "@install-hooks"

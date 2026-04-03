@@ -12,7 +12,6 @@ use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use PrecisionSoft\Doctrine\Type\Contract\AbstractType;
-use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
 
 class TinyintType extends AbstractType
@@ -24,15 +23,10 @@ class TinyintType extends AbstractType
         return self::TINYINT;
     }
 
-    public function getName(): string
-    {
-        return self::TINYINT;
-    }
-
     public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
         if (false === $platform instanceof MySQLPlatform) {
-            throw new Exception('this type only support mysql');
+            throw new InvalidTypeValueException('this type only supports mysql');
         }
 
         $unsigned = true === ($column['unsigned'] ?? false) ? ' UNSIGNED' : '';
@@ -40,7 +34,7 @@ class TinyintType extends AbstractType
         return 'tinyint' . $unsigned;
     }
 
-    public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): int|string|null
+    public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): ?int
     {
         if (null === $value) {
             return null;
@@ -58,7 +52,7 @@ class TinyintType extends AbstractType
         ) {
             $this->validateRange((int)$value);
 
-            return $value;
+            return (int)$value;
         }
 
         throw new InvalidTypeValueException(
@@ -69,11 +63,11 @@ class TinyintType extends AbstractType
         );
     }
 
-    private function validateRange(int $value): void
+    private function validateRange(int $tinyintValue): void
     {
-        if ($value < -128 || $value > 255) {
+        if (-128 > $tinyintValue || 255 < $tinyintValue) {
             throw new InvalidTypeValueException(
-                sprintf('value `%d` is out of tinyint range (-128 to 255)', $value),
+                sprintf('value `%d` is out of tinyint range (-128 to 255)', $tinyintValue),
             );
         }
     }

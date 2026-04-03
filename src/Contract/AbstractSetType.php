@@ -8,65 +8,76 @@ declare(strict_types=1);
 
 namespace PrecisionSoft\Doctrine\Type\Contract;
 
+use BackedEnum;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
+use UnitEnum;
 
 abstract class AbstractSetType extends AbstractPhpEnumType
 {
-    public function convertToDatabaseValue(mixed $values, AbstractPlatform $platform): ?string
+    public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): ?string
     {
-        if (null === $values) {
+        if (null === $value) {
             return null;
         }
 
-        $converted = array_map(
-            function (mixed $value): mixed {
-                $dbValue = $this->convertValueToDatabase($value);
+        if (false === is_array($value)) {
+            throw new InvalidTypeValueException(
+                sprintf('expected array for set type `%s`', static::getDefaultName()),
+            );
+        }
 
-                if (true === is_string($dbValue) && false !== strpos($dbValue, ',')) {
+        $convertedValues = array_map(
+            function (mixed $enumCase): mixed {
+                $databaseValue = $this->convertValueToDatabase($enumCase);
+
+                if (true === is_string($databaseValue) && true === str_contains($databaseValue, ',')) {
                     throw new InvalidTypeValueException(
-                        sprintf('set value `%s` must not contain a comma', $dbValue),
+                        sprintf('set value `%s` must not contain a comma', $databaseValue),
                     );
                 }
 
-                return $dbValue;
+                return $databaseValue;
             },
-            (array)$values,
+            $value,
         );
 
-        $filtered = array_filter(
-            $converted,
-            static fn(mixed $value): bool => null !== $value,
+        $filteredValues = array_filter(
+            $convertedValues,
+            static fn(mixed $convertedValue): bool => null !== $convertedValue,
         );
 
-        return 0 === count($filtered) ? null : implode(',', $filtered);
+        $uniqueValues = array_unique($filteredValues);
+
+        return 0 === count($uniqueValues) ? null : implode(',', $uniqueValues);
     }
 
+    /** @return array<int, UnitEnum|BackedEnum>|null */
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?array
     {
         return null === $value || '' === $value
             ? null
             : array_map(
-                fn(mixed $item): mixed => $this->convertValueToPhp($item),
+                fn(mixed $databaseValue): mixed => $this->convertValueToPhp($databaseValue),
                 explode(',', $value),
             );
     }
 
     public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
-        $values = [];
+        $quotedSetValues = [];
 
-        foreach ($this->getValues() as $value) {
-            $values[] = $platform->quoteStringLiteral(
-                $this->convertValueToDatabase($value),
+        foreach ($this->getValues() as $enumCase) {
+            $quotedSetValues[] = $platform->quoteStringLiteral(
+                $this->convertValueToDatabase($enumCase),
             );
         }
 
         if (true === $platform instanceof MySQLPlatform) {
-            return 'SET(' . implode(',', $values) . ')';
+            return 'SET(' . implode(',', $quotedSetValues) . ')';
         }
 
-        return $platform->getIntegerTypeDeclarationSQL($column);
+        return $platform->getStringTypeDeclarationSQL($column);
     }
 }

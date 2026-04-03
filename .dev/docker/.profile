@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [[ -f /var/www/html/dev/utility.sh ]]; then
-    . /var/www/html/dev/utility.sh
+if [[ -f /var/www/html/.dev/utility.sh ]]; then
+    . /var/www/html/.dev/utility.sh
 fi
 
 if [[ -f ~/.bashrc ]]; then
@@ -55,6 +55,20 @@ punit() {
 
     print_command "php -d memory_limit=-1 ${EXEC_PATH} $@"
     php -d memory_limit=-1 "${EXEC_PATH}" "$@"
+
+    return 0
+}
+
+pstan() {
+    if [[ -e "${PWD}/vendor/bin/phpstan" ]]; then
+        EXEC_PATH="${PWD}/vendor/bin/phpstan"
+    else
+        print_error 'phpstan not found'
+        return 0
+    fi
+
+    print_command "php -d memory_limit=-1 ${EXEC_PATH} analyse $@"
+    php -d memory_limit=-1 "${EXEC_PATH}" analyse "$@"
 
     return 0
 }
