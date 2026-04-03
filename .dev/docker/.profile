@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [[ -f /var/www/html/.dev/utility.sh ]]; then
-    . /var/www/html/.dev/utility.sh
+if [[ -f "${WORKDIR}/.dev/utility.sh" ]]; then
+    . "${WORKDIR}/.dev/utility.sh"
 fi
 
 if [[ -f ~/.bashrc ]]; then
@@ -11,10 +11,14 @@ fi
 # generic
 alias ll="ls -al"
 
-alias app="cd /var/www/html"
+alias app="cd ${WORKDIR}"
 
 alias full="clear && scomposer install && pfix && punit && pstan"
 # end generic
+
+# git
+git config --global --add safe.directory "${WORKDIR}"
+# end git
 
 # composer
 scomposer() {

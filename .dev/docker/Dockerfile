@@ -13,10 +13,9 @@ ENV WORKDIR=${WORKDIR}
 COPY ${CONFIG_PATH}/.profile* ${HOME}/
 ENV ENV="${HOME}/.profile"
 
-RUN apk add --no-cache shadow bash git
-RUN rm -rf /tmp/*
+RUN apk add --no-cache shadow bash git && rm -rf /tmp/*
 
-RUN cp $PHP_INI_DIR/php.ini-production $PHP_INI_DIR/php.ini
+RUN cp ${PHP_INI_DIR}/php.ini-production ${PHP_INI_DIR}/php.ini
 
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 
@@ -27,5 +26,6 @@ WORKDIR ${WORKDIR}
 
 ENV ENTRYPOINT_SH=/entrypoint.sh
 COPY ${ENTRYPOINT_SH_SOURCE} ${ENTRYPOINT_SH}
+RUN chmod +x ${ENTRYPOINT_SH}
 
 ENTRYPOINT exec ${ENTRYPOINT_SH}

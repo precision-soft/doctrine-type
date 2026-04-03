@@ -1,12 +1,13 @@
 #!/bin/bash
+set -e
 # set -x
 
-source ${HOME}/.profile
+source "${HOME}/.profile"
 
 echo "boot started with path ${WORKDIR}"
 
-cd ${WORKDIR}
+cd "${WORKDIR}"
 
-scomposer install || echo "composer install failed, continuing..."
+scomposer install || echo "[WARNING] composer install failed" >&2
 
 sleep infinity
