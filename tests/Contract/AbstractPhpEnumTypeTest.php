@@ -135,6 +135,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $anonymousEnumType = new class extends AbstractEnumType {
             public function getEnumClass(): string
             {
+                /** @phpstan-ignore return.type */
                 return 'NonExistentClass';
             }
         };
@@ -150,6 +151,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $anonymousEnumType = new class extends AbstractEnumType {
             public function getEnumClass(): string
             {
+                /** @phpstan-ignore return.type */
                 return stdClass::class;
             }
         };
@@ -194,6 +196,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
     public function testGetEnumValuesWithNotEnumThrows(): void
     {
         $anonymousEnumType = new class extends AbstractEnumType {
+            /** @return array<int, \UnitEnum> */
             public function callGetEnumValues(): array
             {
                 return $this->getEnumValues();

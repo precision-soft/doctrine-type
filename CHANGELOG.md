@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2026-04-04
+
+### Changed
+
+- Upgrade from PHPUnit 9 to PHPUnit 11.5 via `precision-soft/symfony-phpunit: ^3.0`
+- Replace `<coverage processUncoveredFiles="true">` with `<source>` element in `phpunit.xml.dist`
+- Replace `<listeners>` with `<extensions>` using `Symfony\Bridge\PhpUnit\SymfonyExtension`
+- Add `failOnRisky` and `failOnWarning` attributes to `phpunit.xml.dist`
+- Add `tests/` to PHPStan analysis paths in `phpstan.neon`
+- Add PHPStan type annotations to anonymous test classes in `AbstractPhpEnumTypeTest`
+- Uppercase `TINYINT` SQL keyword in `TinyintType::getSQLDeclaration()` and `validateRange()` error message
+- Quote `$COMPOSER_DEV_MODE` variable in `composer.json` hook script
+
 ## [3.0.0] - 2026-04-03
 
 ### Breaking Changes
@@ -143,6 +156,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DateTimeType` with `ON UPDATE CURRENT_TIMESTAMP` support
 - `TinyintType` for MySQL `TINYINT` columns
 - Project-specific exception hierarchy
+
+[3.0.1]: https://github.com/precision-soft/doctrine-type/compare/v3.0.0...v3.0.1
 
 [3.0.0]: https://github.com/precision-soft/doctrine-type/compare/v2.2.3...v3.0.0
 

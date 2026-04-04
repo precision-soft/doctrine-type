@@ -44,14 +44,14 @@ class TinyintTypeTest extends AbstractTestCase
     {
         $sqlDeclaration = $this->tinyintType->getSQLDeclaration([], $this->mysqlPlatform);
 
-        self::assertSame('tinyint', $sqlDeclaration);
+        self::assertSame('TINYINT', $sqlDeclaration);
     }
 
     public function testGetSqlDeclarationUnsigned(): void
     {
         $sqlDeclaration = $this->tinyintType->getSQLDeclaration(['unsigned' => true], $this->mysqlPlatform);
 
-        self::assertSame('tinyint UNSIGNED', $sqlDeclaration);
+        self::assertSame('TINYINT UNSIGNED', $sqlDeclaration);
     }
 
     public function testGetSqlDeclarationNonMysqlThrows(): void
@@ -99,7 +99,7 @@ class TinyintTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueOutOfRangeHighThrows(): void
     {
         $this->expectException(InvalidTypeValueException::class);
-        $this->expectExceptionMessage('out of tinyint range');
+        $this->expectExceptionMessage('out of TINYINT range');
 
         $this->tinyintType->convertToDatabaseValue(256, $this->mysqlPlatform);
     }
@@ -107,7 +107,7 @@ class TinyintTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueOutOfRangeLowThrows(): void
     {
         $this->expectException(InvalidTypeValueException::class);
-        $this->expectExceptionMessage('out of tinyint range');
+        $this->expectExceptionMessage('out of TINYINT range');
 
         $this->tinyintType->convertToDatabaseValue(-129, $this->mysqlPlatform);
     }
@@ -115,7 +115,7 @@ class TinyintTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueOutOfRangeStringThrows(): void
     {
         $this->expectException(InvalidTypeValueException::class);
-        $this->expectExceptionMessage('out of tinyint range');
+        $this->expectExceptionMessage('out of TINYINT range');
 
         $this->tinyintType->convertToDatabaseValue('999', $this->mysqlPlatform);
     }
@@ -181,7 +181,7 @@ class TinyintTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueBoundaryMinSignedMinus1Throws(): void
     {
         $this->expectException(InvalidTypeValueException::class);
-        $this->expectExceptionMessage('out of tinyint range');
+        $this->expectExceptionMessage('out of TINYINT range');
 
         $this->tinyintType->convertToDatabaseValue(-129, $this->mysqlPlatform);
     }
@@ -203,7 +203,7 @@ class TinyintTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueBoundaryMaxUnsignedPlus1Throws(): void
     {
         $this->expectException(InvalidTypeValueException::class);
-        $this->expectExceptionMessage('out of tinyint range');
+        $this->expectExceptionMessage('out of TINYINT range');
 
         $this->tinyintType->convertToDatabaseValue(256, $this->mysqlPlatform);
     }
@@ -239,7 +239,7 @@ class TinyintTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueStringBoundaryMaxUnsignedPlus1Throws(): void
     {
         $this->expectException(InvalidTypeValueException::class);
-        $this->expectExceptionMessage('out of tinyint range');
+        $this->expectExceptionMessage('out of TINYINT range');
 
         $this->tinyintType->convertToDatabaseValue('256', $this->mysqlPlatform);
     }
@@ -309,6 +309,6 @@ class TinyintTypeTest extends AbstractTestCase
     {
         $sqlDeclaration = $this->tinyintType->getSQLDeclaration(['unsigned' => false], $this->mysqlPlatform);
 
-        self::assertSame('tinyint', $sqlDeclaration);
+        self::assertSame('TINYINT', $sqlDeclaration);
     }
 }

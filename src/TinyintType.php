@@ -31,7 +31,7 @@ class TinyintType extends AbstractType
 
         $unsigned = true === ($column['unsigned'] ?? false) ? ' UNSIGNED' : '';
 
-        return 'tinyint' . $unsigned;
+        return 'TINYINT' . $unsigned;
     }
 
     public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): ?int
@@ -67,7 +67,7 @@ class TinyintType extends AbstractType
     {
         if (-128 > $tinyintValue || 255 < $tinyintValue) {
             throw new InvalidTypeValueException(
-                sprintf('value `%d` is out of tinyint range (-128 to 255)', $tinyintValue),
+                sprintf('value `%d` is out of TINYINT range (-128 to 255)', $tinyintValue),
             );
         }
     }
