@@ -10,6 +10,7 @@ namespace PrecisionSoft\Doctrine\Type\Test\Contract;
 
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use PrecisionSoft\Doctrine\Type\Contract\AbstractPhpEnumType;
 use PrecisionSoft\Doctrine\Type\Contract\AbstractSetType;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedEnum;
@@ -34,6 +35,13 @@ class AbstractSetTypeTest extends AbstractTestCase
         parent::setUp();
 
         $this->mysqlPlatform = new MySQLPlatform();
+    }
+
+    protected function tearDown(): void
+    {
+        AbstractPhpEnumType::clearCache();
+
+        parent::tearDown();
     }
 
     public function testConvertToDatabaseValueNull(): void

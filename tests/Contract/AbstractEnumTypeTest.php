@@ -14,6 +14,7 @@ use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedEnum;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedEnumType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnum;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnumType;
+use PrecisionSoft\Doctrine\Type\Contract\AbstractPhpEnumType;
 use PrecisionSoft\Symfony\Phpunit\MockDto;
 use PrecisionSoft\Symfony\Phpunit\TestCase\AbstractTestCase;
 use stdClass;
@@ -32,6 +33,13 @@ class AbstractEnumTypeTest extends AbstractTestCase
         parent::setUp();
 
         $this->mysqlPlatform = new MySQLPlatform();
+    }
+
+    protected function tearDown(): void
+    {
+        AbstractPhpEnumType::clearCache();
+
+        parent::tearDown();
     }
 
     public function testBackedEnumConvertToDatabaseValueNull(): void
