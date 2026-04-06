@@ -22,19 +22,19 @@ abstract class AbstractSetType extends AbstractPhpEnumType
             return null;
         }
 
-        if (false === is_array($value)) {
+        if (false === \is_array($value)) {
             throw new InvalidTypeValueException(
-                sprintf('expected array for set type `%s`', static::getDefaultName()),
+                \sprintf('expected array for set type `%s`', static::getDefaultName()),
             );
         }
 
-        $convertedValues = array_map(
+        $convertedValues = \array_map(
             function (mixed $enumCase): mixed {
                 $databaseValue = $this->convertValueToDatabase($enumCase);
 
-                if (true === is_string($databaseValue) && true === str_contains($databaseValue, ',')) {
+                if (true === \is_string($databaseValue) && true === \str_contains($databaseValue, ',')) {
                     throw new InvalidTypeValueException(
-                        sprintf('set value `%s` must not contain a comma', $databaseValue),
+                        \sprintf('set value `%s` must not contain a comma', $databaseValue),
                     );
                 }
 
@@ -43,14 +43,14 @@ abstract class AbstractSetType extends AbstractPhpEnumType
             $value,
         );
 
-        $filteredValues = array_filter(
+        $filteredValues = \array_filter(
             $convertedValues,
             static fn(mixed $convertedValue): bool => null !== $convertedValue,
         );
 
-        $uniqueValues = array_unique($filteredValues);
+        $uniqueValues = \array_unique($filteredValues);
 
-        return 0 === count($uniqueValues) ? null : implode(',', $uniqueValues);
+        return 0 === \count($uniqueValues) ? null : \implode(',', $uniqueValues);
     }
 
     /** @return array<int, UnitEnum|BackedEnum>|null */
@@ -58,9 +58,9 @@ abstract class AbstractSetType extends AbstractPhpEnumType
     {
         return null === $value || '' === $value
             ? null
-            : array_map(
-                fn(mixed $databaseValue): mixed => $this->convertValueToPhp($databaseValue),
-                explode(',', $value),
+            : \array_map(
+                fn(mixed $databaseValue): mixed => $this->convertValueToPhp(\trim($databaseValue)),
+                \explode(',', $value),
             );
     }
 
@@ -75,7 +75,7 @@ abstract class AbstractSetType extends AbstractPhpEnumType
         }
 
         if (true === $platform instanceof MySQLPlatform) {
-            return 'SET(' . implode(',', $quotedSetValues) . ')';
+            return 'SET(' . \implode(',', $quotedSetValues) . ')';
         }
 
         return $platform->getStringTypeDeclarationSQL($column);

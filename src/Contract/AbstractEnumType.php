@@ -38,7 +38,7 @@ abstract class AbstractEnumType extends AbstractPhpEnumType
         }
 
         if (true === $platform instanceof MySQLPlatform) {
-            return 'ENUM(' . implode(',', $quotedEnumValues) . ')';
+            return 'ENUM(' . \implode(',', $quotedEnumValues) . ')';
         }
 
         return $platform->getStringTypeDeclarationSQL($column);

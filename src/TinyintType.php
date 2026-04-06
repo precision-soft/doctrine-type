@@ -40,15 +40,15 @@ class TinyintType extends AbstractType
             return null;
         }
 
-        if (true === is_int($value)) {
+        if (true === \is_int($value)) {
             $this->validateRange($value);
 
             return $value;
         }
 
         if (
-            true === is_string($value)
-            && 1 === preg_match('/^-?\d+$/', $value)
+            true === \is_string($value)
+            && 1 === \preg_match('/^-?\d+$/', $value)
         ) {
             $this->validateRange((int)$value);
 
@@ -56,9 +56,9 @@ class TinyintType extends AbstractType
         }
 
         throw new InvalidTypeValueException(
-            sprintf(
+            \sprintf(
                 'expected integer and got `%s`',
-                true === is_object($value) ? get_class($value) : gettype($value),
+                true === \is_object($value) ? \get_class($value) : \gettype($value),
             ),
         );
     }
@@ -67,7 +67,7 @@ class TinyintType extends AbstractType
     {
         if (-128 > $tinyintValue || 255 < $tinyintValue) {
             throw new InvalidTypeValueException(
-                sprintf('value `%d` is out of TINYINT range (-128 to 255)', $tinyintValue),
+                \sprintf('value `%d` is out of TINYINT range (-128 to 255)', $tinyintValue),
             );
         }
     }

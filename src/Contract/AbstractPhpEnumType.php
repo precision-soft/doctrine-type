@@ -12,6 +12,7 @@ use BackedEnum;
 use PrecisionSoft\Doctrine\Type\Enum\EnumType;
 use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
+use ReflectionEnum;
 use UnitEnum;
 
 abstract class AbstractPhpEnumType extends AbstractType
@@ -31,7 +32,7 @@ abstract class AbstractPhpEnumType extends AbstractType
         }
 
         throw new Exception(
-            sprintf(
+            \sprintf(
                 'you must use the enum class or implement `%s` for type `%s`',
                 __FUNCTION__,
                 static::getDefaultName(),
@@ -57,12 +58,12 @@ abstract class AbstractPhpEnumType extends AbstractType
             EnumType::simple => true === $phpValue instanceof UnitEnum
                 ? $phpValue->name
                 : throw new InvalidTypeValueException(
-                    sprintf('invalid value for type `%s`', static::getDefaultName()),
+                    \sprintf('invalid value for type `%s`', static::getDefaultName()),
                 ),
             EnumType::backed => true === $phpValue instanceof BackedEnum
                 ? $phpValue->value
                 : throw new InvalidTypeValueException(
-                    sprintf('invalid value for type `%s`', static::getDefaultName()),
+                    \sprintf('invalid value for type `%s`', static::getDefaultName()),
                 ),
         };
     }
@@ -85,7 +86,7 @@ abstract class AbstractPhpEnumType extends AbstractType
 
         if (EnumType::notEnum === $enumType) {
             throw new Exception(
-                sprintf('invalid enum class for type `%s`', static::getDefaultName()),
+                \sprintf('invalid enum class for type `%s`', static::getDefaultName()),
             );
         }
 
@@ -109,9 +110,9 @@ abstract class AbstractPhpEnumType extends AbstractType
             return self::$enumTypeCache[$calledClassName] = EnumType::notEnum;
         }
 
-        if (false === enum_exists($enumClassName)) {
+        if (false === \enum_exists($enumClassName)) {
             throw new Exception(
-                sprintf(
+                \sprintf(
                     'enum class `%s` does not exist for type `%s`',
                     $enumClassName,
                     static::getDefaultName(),
@@ -119,26 +120,36 @@ abstract class AbstractPhpEnumType extends AbstractType
             );
         }
 
-        return self::$enumTypeCache[$calledClassName] = true === is_a($enumClassName, BackedEnum::class, true)
+        return self::$enumTypeCache[$calledClassName] = true === \is_a($enumClassName, BackedEnum::class, true)
             ? EnumType::backed
             : EnumType::simple;
     }
 
     private function getEnumByName(mixed $enumCaseName): mixed
     {
+        /** @var class-string<UnitEnum> $enumClassName */
         $enumClassName = $this->getEnumClass();
+        $result = null;
 
-        try {
-            return constant($enumClassName . '::' . $enumCaseName);
-        } catch (\Error) {
+        foreach ($enumClassName::cases() as $enumCase) {
+            if ($enumCaseName === $enumCase->name) {
+                $result = $enumCase;
+
+                break;
+            }
+        }
+
+        if (null === $result) {
             throw new InvalidTypeValueException(
-                sprintf(
+                \sprintf(
                     'invalid enum value `%s` for type `%s`',
                     $enumCaseName,
                     static::getDefaultName(),
                 ),
             );
         }
+
+        return $result;
     }
 
     private function getEnumByValue(mixed $backedEnumValue): mixed
@@ -147,16 +158,23 @@ abstract class AbstractPhpEnumType extends AbstractType
 
         if (null === $enumClassName) {
             throw new Exception(
-                sprintf('enum class is null for type `%s`', static::getDefaultName()),
+                \sprintf('enum class is null for type `%s`', static::getDefaultName()),
             );
         }
 
         /** @var class-string<BackedEnum> $enumClassName */
+        $reflectionEnum = new ReflectionEnum($enumClassName);
+        $backingType = $reflectionEnum->getBackingType();
+
+        if (null !== $backingType && 'int' === $backingType->getName()) {
+            $backedEnumValue = (int)$backedEnumValue;
+        }
+
         $enumCase = $enumClassName::tryFrom($backedEnumValue);
 
         if (null === $enumCase) {
             throw new InvalidTypeValueException(
-                sprintf(
+                \sprintf(
                     'invalid enum value `%s` for type `%s`',
                     $backedEnumValue,
                     static::getDefaultName(),
