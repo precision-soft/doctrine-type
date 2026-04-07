@@ -15,11 +15,14 @@ use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedEnum;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedEnumType;
+use PrecisionSoft\Doctrine\Type\Test\Utility\TestIntBackedEnum;
+use PrecisionSoft\Doctrine\Type\Test\Utility\TestIntBackedEnumType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnum;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnumType;
 use PrecisionSoft\Symfony\Phpunit\MockDto;
 use PrecisionSoft\Symfony\Phpunit\TestCase\AbstractTestCase;
 use stdClass;
+use UnitEnum;
 
 class AbstractPhpEnumTypeTest extends AbstractTestCase
 {
@@ -196,7 +199,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
     public function testGetEnumValuesWithNotEnumThrows(): void
     {
         $anonymousEnumType = new class extends AbstractEnumType {
-            /** @return array<int, \UnitEnum> */
+            /** @return array<int, UnitEnum> */
             public function callGetEnumValues(): array
             {
                 return $this->getEnumValues();
@@ -244,5 +247,30 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $testBackedEnumType = new TestBackedEnumType();
 
         self::assertSame(TestBackedEnum::class, $testBackedEnumType->getEnumClass());
+    }
+
+    public function testIntBackedEnumConvertToDatabaseValue(): void
+    {
+        $testIntBackedEnumType = new TestIntBackedEnumType();
+        $databaseValue = $testIntBackedEnumType->convertToDatabaseValue(TestIntBackedEnum::medium, $this->mysqlPlatform);
+
+        self::assertSame(5, $databaseValue);
+    }
+
+    public function testIntBackedEnumConvertToPhpValue(): void
+    {
+        $testIntBackedEnumType = new TestIntBackedEnumType();
+        $phpValue = $testIntBackedEnumType->convertToPHPValue('5', $this->mysqlPlatform);
+
+        self::assertSame(TestIntBackedEnum::medium, $phpValue);
+    }
+
+    public function testIntBackedEnumConvertToPhpValueInvalidThrows(): void
+    {
+        $testIntBackedEnumType = new TestIntBackedEnumType();
+
+        $this->expectException(InvalidTypeValueException::class);
+
+        $testIntBackedEnumType->convertToPHPValue('999', $this->mysqlPlatform);
     }
 }

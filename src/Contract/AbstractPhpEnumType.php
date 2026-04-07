@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace PrecisionSoft\Doctrine\Type\Contract;
 
 use BackedEnum;
+use Error;
 use PrecisionSoft\Doctrine\Type\Enum\EnumType;
 use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
@@ -20,9 +21,16 @@ abstract class AbstractPhpEnumType extends AbstractType
     /** @var array<string, EnumType> */
     private static array $enumTypeCache = [];
 
-    /**
-     * @return array<int, mixed>
-     */
+    /** @var array<class-string, ?string> */
+    private static array $backingTypeCache = [];
+
+    public static function clearCache(): void
+    {
+        self::$enumTypeCache = [];
+        self::$backingTypeCache = [];
+    }
+
+    /** @return array<int, mixed> */
     public function getValues(): array
     {
         $enumClassName = $this->getEnumClass();
@@ -44,11 +52,6 @@ abstract class AbstractPhpEnumType extends AbstractType
     public function getEnumClass(): ?string
     {
         return null;
-    }
-
-    public static function clearCache(): void
-    {
-        self::$enumTypeCache = [];
     }
 
     protected function convertValueToDatabase(mixed $phpValue): mixed
@@ -125,21 +128,14 @@ abstract class AbstractPhpEnumType extends AbstractType
             : EnumType::simple;
     }
 
-    private function getEnumByName(mixed $enumCaseName): mixed
+    private function getEnumByName(mixed $enumCaseName): UnitEnum
     {
         /** @var class-string<UnitEnum> $enumClassName */
         $enumClassName = $this->getEnumClass();
-        $result = null;
 
-        foreach ($enumClassName::cases() as $enumCase) {
-            if ($enumCaseName === $enumCase->name) {
-                $result = $enumCase;
-
-                break;
-            }
-        }
-
-        if (null === $result) {
+        try {
+            return \constant($enumClassName . '::' . $enumCaseName);
+        } catch (Error) {
             throw new InvalidTypeValueException(
                 \sprintf(
                     'invalid enum value `%s` for type `%s`',
@@ -148,25 +144,20 @@ abstract class AbstractPhpEnumType extends AbstractType
                 ),
             );
         }
-
-        return $result;
     }
 
-    private function getEnumByValue(mixed $backedEnumValue): mixed
+    private function getEnumByValue(mixed $backedEnumValue): BackedEnum
     {
+        /** @var class-string<BackedEnum> $enumClassName */
         $enumClassName = $this->getEnumClass();
 
-        if (null === $enumClassName) {
-            throw new Exception(
-                \sprintf('enum class is null for type `%s`', static::getDefaultName()),
-            );
+        if (false === isset(self::$backingTypeCache[$enumClassName])) {
+            $reflectionEnum = new ReflectionEnum($enumClassName);
+            $backingType = $reflectionEnum->getBackingType();
+            self::$backingTypeCache[$enumClassName] = null !== $backingType ? $backingType->getName() : null;
         }
 
-        /** @var class-string<BackedEnum> $enumClassName */
-        $reflectionEnum = new ReflectionEnum($enumClassName);
-        $backingType = $reflectionEnum->getBackingType();
-
-        if (null !== $backingType && 'int' === $backingType->getName()) {
+        if ('int' === self::$backingTypeCache[$enumClassName]) {
             $backedEnumValue = (int)$backedEnumValue;
         }
 

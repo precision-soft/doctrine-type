@@ -12,7 +12,7 @@ use PrecisionSoft\Doctrine\Type\Contract\AbstractEnumType;
 
 class TestSimpleEnumType extends AbstractEnumType
 {
-    public function getEnumClass(): string
+    public function getEnumClass(): ?string
     {
         return TestSimpleEnum::class;
     }

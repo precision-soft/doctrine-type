@@ -28,14 +28,41 @@ abstract class AbstractSetType extends AbstractPhpEnumType
             );
         }
 
+        $allowedEnumClass = $this->getEnumClass();
+
         $convertedValues = \array_map(
-            function (mixed $enumCase): mixed {
+            function (mixed $enumCase) use ($allowedEnumClass): mixed {
+                if (null !== $allowedEnumClass && false === $enumCase instanceof UnitEnum) {
+                    throw new InvalidTypeValueException(
+                        \sprintf(
+                            'expected enum case of `%s` for type `%s`',
+                            $allowedEnumClass,
+                            static::getDefaultName(),
+                        ),
+                    );
+                }
+
+                if (null !== $allowedEnumClass && false === $enumCase instanceof $allowedEnumClass) {
+                    throw new InvalidTypeValueException(
+                        \sprintf(
+                            'enum case `%s` does not belong to `%s` for type `%s`',
+                            $enumCase::class,
+                            $allowedEnumClass,
+                            static::getDefaultName(),
+                        ),
+                    );
+                }
+
                 $databaseValue = $this->convertValueToDatabase($enumCase);
 
-                if (true === \is_string($databaseValue) && true === \str_contains($databaseValue, ',')) {
-                    throw new InvalidTypeValueException(
-                        \sprintf('set value `%s` must not contain a comma', $databaseValue),
-                    );
+                if (null !== $databaseValue) {
+                    $stringValue = (string)$databaseValue;
+
+                    if (true === \str_contains($stringValue, ',')) {
+                        throw new InvalidTypeValueException(
+                            \sprintf('set value `%s` must not contain a comma', $stringValue),
+                        );
+                    }
                 }
 
                 return $databaseValue;
@@ -45,7 +72,7 @@ abstract class AbstractSetType extends AbstractPhpEnumType
 
         $filteredValues = \array_filter(
             $convertedValues,
-            static fn(mixed $convertedValue): bool => null !== $convertedValue,
+            static fn(mixed $convertedValue): bool => null !== $convertedValue && '' !== $convertedValue,
         );
 
         $uniqueValues = \array_unique($filteredValues);
@@ -56,12 +83,20 @@ abstract class AbstractSetType extends AbstractPhpEnumType
     /** @return array<int, UnitEnum|BackedEnum>|null */
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?array
     {
-        return null === $value || '' === $value
-            ? null
-            : \array_map(
-                fn(mixed $databaseValue): mixed => $this->convertValueToPhp(\trim($databaseValue)),
-                \explode(',', $value),
+        if (null === $value || '' === $value) {
+            return null;
+        }
+
+        if (false === \is_string($value)) {
+            throw new InvalidTypeValueException(
+                \sprintf('expected string for set type `%s`', static::getDefaultName()),
             );
+        }
+
+        return \array_map(
+            fn(mixed $databaseValue): mixed => $this->convertValueToPhp(\trim($databaseValue)),
+            \explode(',', $value),
+        );
     }
 
     public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
@@ -70,7 +105,7 @@ abstract class AbstractSetType extends AbstractPhpEnumType
 
         foreach ($this->getValues() as $enumCase) {
             $quotedSetValues[] = $platform->quoteStringLiteral(
-                $this->convertValueToDatabase($enumCase),
+                (string)$this->convertValueToDatabase($enumCase),
             );
         }
 

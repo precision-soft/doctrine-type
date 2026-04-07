@@ -12,7 +12,7 @@ use PrecisionSoft\Doctrine\Type\Contract\AbstractSetType;
 
 class TestSimpleSetType extends AbstractSetType
 {
-    public function getEnumClass(): string
+    public function getEnumClass(): ?string
     {
         return TestSimpleEnum::class;
     }

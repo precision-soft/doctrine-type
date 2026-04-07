@@ -142,17 +142,18 @@ class AbstractSetTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueWithCommaThrows(): void
     {
         $anonymousSetType = new class extends AbstractSetType {
+            /** @return array<int, mixed> */
             public function getValues(): array
             {
                 return ['valid', 'has,comma'];
             }
 
-            public function convertValueToDatabase(mixed $value): mixed
+            protected function convertValueToDatabase(mixed $value): mixed
             {
                 return $value;
             }
 
-            public function convertValueToPhp(mixed $value): mixed
+            protected function convertValueToPhp(mixed $value): mixed
             {
                 return $value;
             }
@@ -176,17 +177,18 @@ class AbstractSetTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueFiltersNullValues(): void
     {
         $anonymousSetType = new class extends AbstractSetType {
+            /** @return array<int, mixed> */
             public function getValues(): array
             {
                 return ['valid', 'other'];
             }
 
-            public function convertValueToDatabase(mixed $value): mixed
+            protected function convertValueToDatabase(mixed $value): mixed
             {
                 return $value;
             }
 
-            public function convertValueToPhp(mixed $value): mixed
+            protected function convertValueToPhp(mixed $value): mixed
             {
                 return $value;
             }
@@ -200,17 +202,18 @@ class AbstractSetTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueAllNullsReturnsNull(): void
     {
         $anonymousSetType = new class extends AbstractSetType {
+            /** @return array<int, mixed> */
             public function getValues(): array
             {
                 return ['valid'];
             }
 
-            public function convertValueToDatabase(mixed $value): mixed
+            protected function convertValueToDatabase(mixed $value): mixed
             {
                 return $value;
             }
 
-            public function convertValueToPhp(mixed $value): mixed
+            protected function convertValueToPhp(mixed $value): mixed
             {
                 return $value;
             }
@@ -292,17 +295,18 @@ class AbstractSetTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueMixedNullAndDuplicates(): void
     {
         $anonymousSetType = new class extends AbstractSetType {
+            /** @return array<int, mixed> */
             public function getValues(): array
             {
                 return ['a', 'b'];
             }
 
-            public function convertValueToDatabase(mixed $value): mixed
+            protected function convertValueToDatabase(mixed $value): mixed
             {
                 return $value;
             }
 
-            public function convertValueToPhp(mixed $value): mixed
+            protected function convertValueToPhp(mixed $value): mixed
             {
                 return $value;
             }
@@ -316,17 +320,18 @@ class AbstractSetTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueNonStringIntegerValues(): void
     {
         $anonymousSetType = new class extends AbstractSetType {
+            /** @return array<int, mixed> */
             public function getValues(): array
             {
                 return [1, 2, 3];
             }
 
-            public function convertValueToDatabase(mixed $value): mixed
+            protected function convertValueToDatabase(mixed $value): mixed
             {
                 return $value;
             }
 
-            public function convertValueToPhp(mixed $value): mixed
+            protected function convertValueToPhp(mixed $value): mixed
             {
                 return $value;
             }
@@ -354,5 +359,35 @@ class AbstractSetTypeTest extends AbstractTestCase
         $this->expectExceptionMessage('expected array for set type');
 
         $testBackedSetType->convertToDatabaseValue(TestBackedEnum::first, $this->mysqlPlatform);
+    }
+
+    public function testConvertToDatabaseValueNonEnumWhenEnumClassSetThrows(): void
+    {
+        $testBackedSetType = new TestBackedSetType();
+
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('expected enum case of');
+
+        $testBackedSetType->convertToDatabaseValue(['not-an-enum'], $this->mysqlPlatform);
+    }
+
+    public function testConvertToDatabaseValueNonEnumIntegerWhenEnumClassSetThrows(): void
+    {
+        $testSimpleSetType = new TestSimpleSetType();
+
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('expected enum case of');
+
+        $testSimpleSetType->convertToDatabaseValue([42], $this->mysqlPlatform);
+    }
+
+    public function testConvertToDatabaseValueWrongEnumClassThrows(): void
+    {
+        $testBackedSetType = new TestBackedSetType();
+
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('does not belong to');
+
+        $testBackedSetType->convertToDatabaseValue([TestSimpleEnum::alpha], $this->mysqlPlatform);
     }
 }

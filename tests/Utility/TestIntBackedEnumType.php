@@ -10,10 +10,10 @@ namespace PrecisionSoft\Doctrine\Type\Test\Utility;
 
 use PrecisionSoft\Doctrine\Type\Contract\AbstractEnumType;
 
-class TestBackedEnumType extends AbstractEnumType
+class TestIntBackedEnumType extends AbstractEnumType
 {
     public function getEnumClass(): ?string
     {
-        return TestBackedEnum::class;
+        return TestIntBackedEnum::class;
     }
 }
