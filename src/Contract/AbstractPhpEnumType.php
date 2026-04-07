@@ -93,7 +93,7 @@ abstract class AbstractPhpEnumType extends AbstractType
             );
         }
 
-        /** @var class-string<UnitEnum> $enumClassName */
+        /** @var class-string<UnitEnum|BackedEnum> $enumClassName */
         $enumClassName = $this->getEnumClass();
 
         return $enumClassName::cases();

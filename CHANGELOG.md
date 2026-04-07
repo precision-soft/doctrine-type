@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-04-07
+
+### Added
+
+- `AbstractPhpEnumType` — int-backed enum support: backing type is detected and cached; database values are cast to `int` before `BackedEnum::from()` when the backing type is `int`
+- `AbstractPhpEnumType::$backingTypeCache` — caches backing type reflection results per enum class to avoid repeated `ReflectionEnum` calls
+- `AbstractPhpEnumType::clearCache()` — now also clears `$backingTypeCache`
+- `AbstractSetType::convertToDatabaseValue()` — validates that each element is an instance of the declared enum class before conversion; rejects mismatched enum cases with `InvalidTypeValueException`
+- `AbstractSetType::convertToPHPValue()` — throws `InvalidTypeValueException` when the raw database value is not a string
+
+### Changed
+
+- `AbstractPhpEnumType::getEnumByName()` — uses `\constant()` with `Error` catch instead of `::cases()` iteration; return type narrowed to `UnitEnum`
+- `AbstractPhpEnumType::getEnumByValue()` — return type narrowed to `BackedEnum`
+- `AbstractSetType::convertToDatabaseValue()` — filters out empty strings in addition to `null` values
+- `AbstractSetType::getSQLDeclaration()` — casts `convertValueToDatabase()` result to `string` before `quoteStringLiteral()`
+
 ## [3.0.2] - 2026-04-06
 
 ### Fixed
@@ -167,6 +184,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DateTimeType` with `ON UPDATE CURRENT_TIMESTAMP` support
 - `TinyintType` for MySQL `TINYINT` columns
 - Project-specific exception hierarchy
+
+[3.1.0]: https://github.com/precision-soft/doctrine-type/compare/v3.0.2...v3.1.0
+
+[3.0.2]: https://github.com/precision-soft/doctrine-type/compare/v3.0.1...v3.0.2
 
 [3.0.1]: https://github.com/precision-soft/doctrine-type/compare/v3.0.0...v3.0.1
 
