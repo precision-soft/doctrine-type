@@ -26,7 +26,9 @@ class TinyintType extends AbstractType
     public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
         if (false === $platform instanceof MySQLPlatform) {
-            throw new InvalidTypeValueException('this type only supports mysql');
+            throw new InvalidTypeValueException(
+                \sprintf('this type only supports mysql, got `%s`', \get_class($platform)),
+            );
         }
 
         $unsigned = true === ($column['unsigned'] ?? false) ? ' UNSIGNED' : '';
