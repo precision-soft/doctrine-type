@@ -55,14 +55,16 @@ abstract class AbstractSetType extends AbstractPhpEnumType
 
                 $databaseValue = $this->convertValueToDatabase($enumCase);
 
-                if (null !== $databaseValue) {
-                    $stringValue = (string)$databaseValue;
+                if (null === $databaseValue) {
+                    return null;
+                }
 
-                    if (true === \str_contains($stringValue, ',')) {
-                        throw new InvalidTypeValueException(
-                            \sprintf('set value `%s` must not contain a comma', $stringValue),
-                        );
-                    }
+                $stringValue = (string)$databaseValue;
+
+                if (true === \str_contains($stringValue, ',')) {
+                    throw new InvalidTypeValueException(
+                        \sprintf('set value `%s` must not contain a comma', $stringValue),
+                    );
                 }
 
                 return $databaseValue;

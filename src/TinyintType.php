@@ -76,7 +76,24 @@ class TinyintType extends AbstractType
 
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?int
     {
-        return null === $value ? null : (int)$value;
+        if (null === $value) {
+            return null;
+        }
+
+        if (true === \is_int($value)) {
+            return $value;
+        }
+
+        if (true === \is_string($value) && 1 === \preg_match('/^-?\d+$/', $value)) {
+            return (int)$value;
+        }
+
+        throw new InvalidTypeValueException(
+            \sprintf(
+                'expected integer and got `%s`',
+                true === \is_object($value) ? \get_class($value) : \gettype($value),
+            ),
+        );
     }
 
     public function getBindingType(): ParameterType
