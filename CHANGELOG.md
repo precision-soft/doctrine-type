@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.2] - 2026-04-10
+## [v3.1.2] - 2026-04-10
 
 ### Fixed
 
@@ -15,13 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `AbstractSetType::convertToDatabaseValue()` — refactored null guard to early return for clarity
 
-## [3.1.1] - 2026-04-07
+## [v3.1.1] - 2026-04-07
 
 ### Fixed
 
 - `TinyintType::getSQLDeclaration()` — includes actual platform class name in unsupported platform error message
 
-## [3.1.0] - 2026-04-07
+## [v3.1.0] - 2026-04-07
 
 ### Added
 
@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AbstractSetType::convertToDatabaseValue()` — filters out empty strings in addition to `null` values
 - `AbstractSetType::getSQLDeclaration()` — casts `convertValueToDatabase()` result to `string` before `quoteStringLiteral()`
 
-## [3.0.2] - 2026-04-06
+## [v3.0.2] - 2026-04-06
 
 ### Fixed
 
@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `\` prefix to all built-in function calls across `AbstractPhpEnumType`, `AbstractSetType`, `AbstractEnumType`, and `TinyintType` for consistency
 - Remove unused `use Error` import from `AbstractPhpEnumType`
 
-## [3.0.1] - 2026-04-04
+## [v3.0.1] - 2026-04-04
 
 ### Changed
 
@@ -62,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Uppercase `TINYINT` SQL keyword in `TinyintType::getSQLDeclaration()` and `validateRange()` error message
 - Quote `$COMPOSER_DEV_MODE` variable in `composer.json` hook script
 
-## [3.0.0] - 2026-04-03
+## [v3.0.0] - 2026-04-03
 
 ### Breaking Changes
 
@@ -117,21 +117,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All PHPStan baseline ignores (baseline is now empty)
 - Redundant PHPDoc comments
 
-## [2.2.3] - 2026-03-20
+## [v2.2.3] - 2026-03-20
 
 ### Fixed
 
 - Filter null values in `AbstractSetType::convertToDatabaseValue()`
 - Correct clone URL in README
 
-## [2.2.2] - 2026-03-19
+## [v2.2.2] - 2026-03-19
 
 ### Fixed
 
 - Add tinyint range validation in `TinyintType::convertToDatabaseValue()`
 - Add set value comma validation in `AbstractSetType::convertToDatabaseValue()`
 
-## [2.2.1] - 2026-03-19
+## [v2.2.1] - 2026-03-19
 
 ### Fixed
 
@@ -142,38 +142,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Update composer.json
 
-## [2.2.0] - 2026-03-19
+## [v2.2.0] - 2026-03-19
 
 ### Changed
 
 - Improve enum type handling with `EnumType` enum for type resolution
 - Modernize `TinyintType` with stricter validation
 
-## [2.1.0] - 2026-03-13
+## [v2.1.0] - 2026-03-13
 
 ### Changed
 
 - Normalize code style across all source files
 
-## [2.0.2] - 2024-11-24
+## [v2.0.2] - 2024-11-24
 
 ### Fixed
 
 - `AbstractPhpEnumType::convertValueToDatabase()` handling for non-backed enums
 
-## [2.0.1] - 2024-10-17
+## [v2.0.1] - 2024-10-17
 
 ### Fixed
 
 - `TinyintType::getBindingType()` return type
 
-## [2.0.0] - 2024-10-17
+## [v2.0.0] - 2024-10-17
 
 ### Added
 
 - Doctrine DBAL 4 support
 
-## [1.1.0] - 2024-10-16
+## [v1.1.0] - 2024-10-16
 
 ### Added
 
@@ -184,14 +184,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Code reformatting
 
-## [1.0.1] - 2024-09-26
+## [v1.0.1] - 2024-09-26
 
 ### Fixed
 
 - `TinyintType::getBindingType()` return value
 - php-cs-fixer configuration
 
-## [1.0.0] - 2024-09-17
+## [v1.0.0] - 2024-09-17
 
 ### Added
 
@@ -201,36 +201,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `TinyintType` for MySQL `TINYINT` columns
 - Project-specific exception hierarchy
 
-[3.1.2]: https://github.com/precision-soft/doctrine-type/compare/v3.1.1...v3.1.2
+[v3.1.2]: https://github.com/precision-soft/doctrine-type/compare/v3.1.1...v3.1.2
 
-[3.1.1]: https://github.com/precision-soft/doctrine-type/compare/v3.1.0...v3.1.1
+[v3.1.1]: https://github.com/precision-soft/doctrine-type/compare/v3.1.0...v3.1.1
 
-[3.1.0]: https://github.com/precision-soft/doctrine-type/compare/v3.0.2...v3.1.0
+[v3.1.0]: https://github.com/precision-soft/doctrine-type/compare/v3.0.2...v3.1.0
 
-[3.0.2]: https://github.com/precision-soft/doctrine-type/compare/v3.0.1...v3.0.2
+[v3.0.2]: https://github.com/precision-soft/doctrine-type/compare/v3.0.1...v3.0.2
 
-[3.0.1]: https://github.com/precision-soft/doctrine-type/compare/v3.0.0...v3.0.1
+[v3.0.1]: https://github.com/precision-soft/doctrine-type/compare/v3.0.0...v3.0.1
 
-[3.0.0]: https://github.com/precision-soft/doctrine-type/compare/v2.2.3...v3.0.0
+[v3.0.0]: https://github.com/precision-soft/doctrine-type/compare/v2.2.3...v3.0.0
 
-[2.2.3]: https://github.com/precision-soft/doctrine-type/compare/v2.2.2...v2.2.3
+[v2.2.3]: https://github.com/precision-soft/doctrine-type/compare/v2.2.2...v2.2.3
 
-[2.2.2]: https://github.com/precision-soft/doctrine-type/compare/v2.2.1...v2.2.2
+[v2.2.2]: https://github.com/precision-soft/doctrine-type/compare/v2.2.1...v2.2.2
 
-[2.2.1]: https://github.com/precision-soft/doctrine-type/compare/v2.2.0...v2.2.1
+[v2.2.1]: https://github.com/precision-soft/doctrine-type/compare/v2.2.0...v2.2.1
 
-[2.2.0]: https://github.com/precision-soft/doctrine-type/compare/v2.1.0...v2.2.0
+[v2.2.0]: https://github.com/precision-soft/doctrine-type/compare/v2.1.0...v2.2.0
 
-[2.1.0]: https://github.com/precision-soft/doctrine-type/compare/v2.0.2...v2.1.0
+[v2.1.0]: https://github.com/precision-soft/doctrine-type/compare/v2.0.2...v2.1.0
 
-[2.0.2]: https://github.com/precision-soft/doctrine-type/compare/v2.0.1...v2.0.2
+[v2.0.2]: https://github.com/precision-soft/doctrine-type/compare/v2.0.1...v2.0.2
 
-[2.0.1]: https://github.com/precision-soft/doctrine-type/compare/v2.0.0...v2.0.1
+[v2.0.1]: https://github.com/precision-soft/doctrine-type/compare/v2.0.0...v2.0.1
 
-[2.0.0]: https://github.com/precision-soft/doctrine-type/compare/v1.1.0...v2.0.0
+[v2.0.0]: https://github.com/precision-soft/doctrine-type/compare/v1.1.0...v2.0.0
 
-[1.1.0]: https://github.com/precision-soft/doctrine-type/compare/v1.0.1...v1.1.0
+[v1.1.0]: https://github.com/precision-soft/doctrine-type/compare/v1.0.1...v1.1.0
 
-[1.0.1]: https://github.com/precision-soft/doctrine-type/compare/v1.0.0...v1.0.1
+[v1.0.1]: https://github.com/precision-soft/doctrine-type/compare/v1.0.0...v1.0.1
 
-[1.0.0]: https://github.com/precision-soft/doctrine-type/releases/tag/v1.0.0
+[v1.0.0]: https://github.com/precision-soft/doctrine-type/releases/tag/v1.0.0

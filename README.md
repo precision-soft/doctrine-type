@@ -1,10 +1,24 @@
 # Doctrine Type
 
+[![PHP >= 8.2](https://img.shields.io/badge/php-%3E%3D8.2-8892BF)](https://www.php.net/)
+[![PHPStan Level 8](https://img.shields.io/badge/phpstan-level%208-brightgreen)](https://phpstan.org/)
+[![Code Style PER-CS2.0](https://img.shields.io/badge/code%20style-PER--CS2.0-blue)](https://www.php-fig.org/per/coding-style/)
+[![License MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 Custom Doctrine DBAL types for MySQL `ENUM`, `SET`, `DATETIME` (with `ON UPDATE`), and `TINYINT` columns.
 
 This library provides abstract base classes you can extend to define your own Doctrine types backed by PHP enums, as well as ready-to-use types for `DATETIME` and `TINYINT`.
 
 Supports Doctrine DBAL 4, PHP 8.2+.
+
+**You may fork and modify it as you wish.**
+
+Any suggestions are welcomed.
+
+## Requirements
+
+- PHP 8.2+
+- Doctrine DBAL 4
 
 ## What It Does
 
@@ -262,11 +276,11 @@ Type::addType(StatusType::getDefaultName(), StatusType::class);
 
 ## Dev
 
+The development environment uses Docker. The `./dc` script is a Docker Compose wrapper located in `.dev/`.
+
 ```shell
 git clone git@github.com:precision-soft/doctrine-type.git
 cd doctrine-type
 
-# docker_compose is a wrapper from .dev/utility.sh
-source .dev/utility.sh
-docker_compose build && docker_compose up -d
+./dc build && ./dc up -d
 ```
