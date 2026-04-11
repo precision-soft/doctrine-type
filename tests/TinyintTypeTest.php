@@ -305,6 +305,46 @@ class TinyintTypeTest extends AbstractTestCase
         self::assertSame(-50, $phpValue);
     }
 
+    public function testConvertToPhpValueFloatThrows(): void
+    {
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('expected integer');
+
+        $this->tinyintType->convertToPHPValue(1.5, $this->mysqlPlatform);
+    }
+
+    public function testConvertToPhpValueBoolThrows(): void
+    {
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('expected integer');
+
+        $this->tinyintType->convertToPHPValue(true, $this->mysqlPlatform);
+    }
+
+    public function testConvertToPhpValueArrayThrows(): void
+    {
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('expected integer');
+
+        $this->tinyintType->convertToPHPValue([], $this->mysqlPlatform);
+    }
+
+    public function testConvertToPhpValueObjectThrows(): void
+    {
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('expected integer');
+
+        $this->tinyintType->convertToPHPValue(new stdClass(), $this->mysqlPlatform);
+    }
+
+    public function testConvertToPhpValueInvalidStringThrows(): void
+    {
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('expected integer');
+
+        $this->tinyintType->convertToPHPValue('abc', $this->mysqlPlatform);
+    }
+
     public function testGetSqlDeclarationUnsignedFalse(): void
     {
         $sqlDeclaration = $this->tinyintType->getSQLDeclaration(['unsigned' => false], $this->mysqlPlatform);

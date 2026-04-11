@@ -317,6 +317,34 @@ class AbstractSetTypeTest extends AbstractTestCase
         self::assertSame('a,b', $databaseValue);
     }
 
+    public function testConvertToPhpValueNonStringThrows(): void
+    {
+        $testBackedSetType = new TestBackedSetType();
+
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('expected string for set type');
+
+        $testBackedSetType->convertToPHPValue(123, $this->mysqlPlatform);
+    }
+
+    public function testConvertToPhpValueArrayThrows(): void
+    {
+        $testBackedSetType = new TestBackedSetType();
+
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('expected string for set type');
+
+        $testBackedSetType->convertToPHPValue([], $this->mysqlPlatform);
+    }
+
+    public function testConvertToPhpValueWhitespacePadded(): void
+    {
+        $testBackedSetType = new TestBackedSetType();
+        $phpValue = $testBackedSetType->convertToPHPValue(' first_value , third_value ', $this->mysqlPlatform);
+
+        self::assertSame([TestBackedEnum::first, TestBackedEnum::third], $phpValue);
+    }
+
     public function testConvertToDatabaseValueNonStringIntegerValues(): void
     {
         $anonymousSetType = new class extends AbstractSetType {
