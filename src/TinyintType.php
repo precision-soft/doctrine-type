@@ -65,15 +65,6 @@ class TinyintType extends AbstractType
         );
     }
 
-    protected function validateRange(int $tinyintValue): void
-    {
-        if (-128 > $tinyintValue || 255 < $tinyintValue) {
-            throw new InvalidTypeValueException(
-                \sprintf('value `%d` is out of TINYINT range (-128 to 255)', $tinyintValue),
-            );
-        }
-    }
-
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?int
     {
         if (null === $value) {
@@ -81,10 +72,14 @@ class TinyintType extends AbstractType
         }
 
         if (true === \is_int($value)) {
+            $this->validateRange($value);
+
             return $value;
         }
 
         if (true === \is_string($value) && 1 === \preg_match('/^-?\d+$/', $value)) {
+            $this->validateRange((int)$value);
+
             return (int)$value;
         }
 
@@ -99,5 +94,19 @@ class TinyintType extends AbstractType
     public function getBindingType(): ParameterType
     {
         return ParameterType::INTEGER;
+    }
+
+    protected function validateRange(int $tinyintValue): void
+    {
+        if (-128 > $tinyintValue || 255 < $tinyintValue) {
+            $this->throwOutOfRangeException($tinyintValue);
+        }
+    }
+
+    protected function throwOutOfRangeException(int $value): never
+    {
+        throw new InvalidTypeValueException(
+            \sprintf('value `%d` is out of TINYINT range (-128 to 255)', $value),
+        );
     }
 }
