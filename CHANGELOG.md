@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.2.1] - 2026-04-13
+
+### Fixed
+
+- `TinyintType::convertToPHPValue()` — now calls `validateRange()` for both `int` and integer-formatted `string` inputs, rejecting out-of-range values with `InvalidTypeValueException` (previously only `convertToDatabaseValue()` enforced the range)
+
+### Changed
+
+- `TinyintType` — extracted out-of-range error into protected `throwOutOfRangeException(int $value): never` helper for reuse and subclass overrides
+
 ## [v3.2.0] - 2026-04-12
 
 ### Changed
@@ -217,6 +227,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DateTimeType` with `ON UPDATE CURRENT_TIMESTAMP` support
 - `TinyintType` for MySQL `TINYINT` columns
 - Project-specific exception hierarchy
+
+[v3.2.1]: https://github.com/precision-soft/doctrine-type/compare/v3.2.0...v3.2.1
 
 [v3.2.0]: https://github.com/precision-soft/doctrine-type/compare/v3.1.2...v3.2.0
 
