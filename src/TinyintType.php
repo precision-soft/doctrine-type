@@ -65,7 +65,7 @@ class TinyintType extends AbstractType
         );
     }
 
-    private function validateRange(int $tinyintValue): void
+    protected function validateRange(int $tinyintValue): void
     {
         if (-128 > $tinyintValue || 255 < $tinyintValue) {
             throw new InvalidTypeValueException(

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.2.0] - 2026-04-12
+
+### Changed
+
+- `AbstractPhpEnumType` — `$enumTypeCache` and `$backingTypeCache` visibility widened from `private static` to `protected static` to allow subclass access
+- `AbstractPhpEnumType` — `getEnumType()`, `getEnumByName()`, `getEnumByValue()` visibility widened from `private` to `protected`
+- `AbstractPhpEnumType::getEnumByName()` — replace `try/catch Error` with `\defined()` check before `\constant()` call; removed unused `use Error` import
+- `AbstractPhpEnumType::getValues()` — PHPDoc return type narrowed from `array<int, mixed>` to `array<int, UnitEnum>`
+- `TinyintType` — `validateRange()` visibility widened from `private` to `protected`
+
 ### Tests
 
 - `AbstractSetTypeTest` — add `convertToPHPValue` tests for non-string types (int, array) and whitespace-padded set values
@@ -207,6 +217,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DateTimeType` with `ON UPDATE CURRENT_TIMESTAMP` support
 - `TinyintType` for MySQL `TINYINT` columns
 - Project-specific exception hierarchy
+
+[v3.2.0]: https://github.com/precision-soft/doctrine-type/compare/v3.1.2...v3.2.0
 
 [v3.1.2]: https://github.com/precision-soft/doctrine-type/compare/v3.1.1...v3.1.2
 

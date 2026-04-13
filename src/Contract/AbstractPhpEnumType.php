@@ -9,7 +9,6 @@ declare(strict_types=1);
 namespace PrecisionSoft\Doctrine\Type\Contract;
 
 use BackedEnum;
-use Error;
 use PrecisionSoft\Doctrine\Type\Enum\EnumType;
 use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
@@ -19,10 +18,10 @@ use UnitEnum;
 abstract class AbstractPhpEnumType extends AbstractType
 {
     /** @var array<string, EnumType> */
-    private static array $enumTypeCache = [];
+    protected static array $enumTypeCache = [];
 
     /** @var array<class-string, ?string> */
-    private static array $backingTypeCache = [];
+    protected static array $backingTypeCache = [];
 
     public static function clearCache(): void
     {
@@ -30,7 +29,7 @@ abstract class AbstractPhpEnumType extends AbstractType
         self::$backingTypeCache = [];
     }
 
-    /** @return array<int, mixed> */
+    /** @return array<int, UnitEnum> */
     public function getValues(): array
     {
         $enumClassName = $this->getEnumClass();
@@ -99,7 +98,7 @@ abstract class AbstractPhpEnumType extends AbstractType
         return $enumClassName::cases();
     }
 
-    private function getEnumType(): EnumType
+    protected function getEnumType(): EnumType
     {
         $calledClassName = static::class;
 
@@ -128,14 +127,14 @@ abstract class AbstractPhpEnumType extends AbstractType
             : EnumType::simple;
     }
 
-    private function getEnumByName(mixed $enumCaseName): UnitEnum
+    protected function getEnumByName(mixed $enumCaseName): UnitEnum
     {
         /** @var class-string<UnitEnum> $enumClassName */
         $enumClassName = $this->getEnumClass();
 
-        try {
-            return \constant($enumClassName . '::' . $enumCaseName);
-        } catch (Error) {
+        $constantName = $enumClassName . '::' . $enumCaseName;
+
+        if (false === \defined($constantName)) {
             throw new InvalidTypeValueException(
                 \sprintf(
                     'invalid enum value `%s` for type `%s`',
@@ -144,9 +143,11 @@ abstract class AbstractPhpEnumType extends AbstractType
                 ),
             );
         }
+
+        return \constant($constantName);
     }
 
-    private function getEnumByValue(mixed $backedEnumValue): BackedEnum
+    protected function getEnumByValue(mixed $backedEnumValue): BackedEnum
     {
         /** @var class-string<BackedEnum> $enumClassName */
         $enumClassName = $this->getEnumClass();
