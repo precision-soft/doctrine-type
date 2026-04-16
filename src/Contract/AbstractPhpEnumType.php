@@ -9,6 +9,8 @@ declare(strict_types=1);
 namespace PrecisionSoft\Doctrine\Type\Contract;
 
 use BackedEnum;
+use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
 use PrecisionSoft\Doctrine\Type\Enum\EnumType;
 use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
@@ -54,10 +56,35 @@ abstract class AbstractPhpEnumType extends AbstractType
         );
     }
 
-    /** @return class-string<UnitEnum>|class-string<BackedEnum>|null */
+    /** @return class-string<UnitEnum>|null */
     public function getEnumClass(): ?string
     {
         return null;
+    }
+
+    /**
+     * @param array<string, mixed> $column
+     * @throws Exception if no enum class is configured or the class does not exist
+     */
+    protected function buildSqlDeclaration(string $sqlKeyword, array $column, AbstractPlatform $platform): string
+    {
+        $quotedValues = [];
+
+        foreach ($this->getValues() as $enumCase) {
+            $quotedValues[] = $platform->quoteStringLiteral(
+                (string)$this->convertValueToDatabase($enumCase),
+            );
+        }
+
+        if (true === $platform instanceof AbstractMySQLPlatform) {
+            return $sqlKeyword . '(' . \implode(',', $quotedValues) . ')';
+        }
+
+        /** @info non-MySQL platforms need `length` and `name` defaults, otherwise `getStringTypeDeclarationSQL` may fail or produce invalid SQL */
+        $column['length'] ??= 255;
+        $column['name'] ??= '';
+
+        return $platform->getStringTypeDeclarationSQL($column);
     }
 
     /**
@@ -93,7 +120,7 @@ abstract class AbstractPhpEnumType extends AbstractType
     }
 
     /**
-     * @return array<int, UnitEnum|BackedEnum>
+     * @return array<int, UnitEnum>
      * @throws Exception if no valid enum class is configured
      */
     protected function getEnumValues(): array
@@ -106,7 +133,7 @@ abstract class AbstractPhpEnumType extends AbstractType
             );
         }
 
-        /** @var class-string<UnitEnum|BackedEnum> $enumClassName */
+        /** @var class-string<UnitEnum> $enumClassName */
         $enumClassName = $this->getEnumClass();
 
         return $enumClassName::cases();

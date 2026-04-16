@@ -162,7 +162,7 @@ The generated SQL on MySQL will append `ON UPDATE CURRENT_TIMESTAMP` to the colu
 
 `TinyintType` maps a MySQL `TINYINT` column. It supports both signed (-128 to 127) and unsigned (0 to 255) declarations:
 
-> **MySQL only.** `TinyintType` requires a MySQL platform. Calling `getSQLDeclaration()` on any other platform throws a `PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException`.
+> **MySQL only.** `TinyintType` requires a MySQL platform. Calling `getSQLDeclaration()` on any other platform throws a `PrecisionSoft\Doctrine\Type\Exception\Exception`.
 
 ```php
 #[ORM\Column(type: 'tinyint')]

@@ -12,6 +12,7 @@ use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use PrecisionSoft\Doctrine\Type\Contract\AbstractType;
+use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
 
 class TinyintType extends AbstractType
@@ -24,12 +25,12 @@ class TinyintType extends AbstractType
     }
 
     /**
-     * @throws InvalidTypeValueException if the platform is not MySQL
+     * @throws Exception if the platform is not MySQL
      */
     public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
         if (false === $platform instanceof AbstractMySQLPlatform) {
-            throw new InvalidTypeValueException(
+            throw new Exception(
                 \sprintf('this type only supports mysql, got `%s`', $platform::class),
             );
         }
@@ -75,7 +76,7 @@ class TinyintType extends AbstractType
         );
     }
 
-    private function parseIntValue(mixed $value): int
+    protected function parseIntValue(mixed $value): int
     {
         if (true === \is_int($value)) {
             $this->validateRange($value);

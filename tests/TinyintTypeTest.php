@@ -11,13 +11,15 @@ namespace PrecisionSoft\Doctrine\Type\Test;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
 use PrecisionSoft\Doctrine\Type\TinyintType;
 use PrecisionSoft\Symfony\Phpunit\MockDto;
 use PrecisionSoft\Symfony\Phpunit\TestCase\AbstractTestCase;
 use stdClass;
 
-class TinyintTypeTest extends AbstractTestCase
+/** @internal */
+final class TinyintTypeTest extends AbstractTestCase
 {
     private TinyintType $tinyintType;
     private MySQLPlatform $mysqlPlatform;
@@ -37,26 +39,26 @@ class TinyintTypeTest extends AbstractTestCase
 
     public function testGetDefaultName(): void
     {
-        self::assertSame('tinyint', TinyintType::getDefaultName());
+        static::assertSame('tinyint', TinyintType::getDefaultName());
     }
 
     public function testGetSqlDeclarationSigned(): void
     {
         $sqlDeclaration = $this->tinyintType->getSQLDeclaration([], $this->mysqlPlatform);
 
-        self::assertSame('TINYINT', $sqlDeclaration);
+        static::assertSame('TINYINT', $sqlDeclaration);
     }
 
     public function testGetSqlDeclarationUnsigned(): void
     {
         $sqlDeclaration = $this->tinyintType->getSQLDeclaration(['unsigned' => true], $this->mysqlPlatform);
 
-        self::assertSame('TINYINT UNSIGNED', $sqlDeclaration);
+        static::assertSame('TINYINT UNSIGNED', $sqlDeclaration);
     }
 
     public function testGetSqlDeclarationNonMysqlThrows(): void
     {
-        $this->expectException(InvalidTypeValueException::class);
+        $this->expectException(Exception::class);
 
         $this->tinyintType->getSQLDeclaration([], new PostgreSQLPlatform());
     }
@@ -65,42 +67,42 @@ class TinyintTypeTest extends AbstractTestCase
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue(null, $this->mysqlPlatform);
 
-        self::assertNull($databaseValue);
+        static::assertNull($databaseValue);
     }
 
     public function testConvertToDatabaseValueInt(): void
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue(42, $this->mysqlPlatform);
 
-        self::assertSame(42, $databaseValue);
+        static::assertSame(42, $databaseValue);
     }
 
     public function testConvertToDatabaseValueNegativeInt(): void
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue(-128, $this->mysqlPlatform);
 
-        self::assertSame(-128, $databaseValue);
+        static::assertSame(-128, $databaseValue);
     }
 
     public function testConvertToDatabaseValueString(): void
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue('100', $this->mysqlPlatform);
 
-        self::assertSame(100, $databaseValue);
+        static::assertSame(100, $databaseValue);
     }
 
     public function testConvertToDatabaseValuePositiveSignedString(): void
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue('+42', $this->mysqlPlatform);
 
-        self::assertSame(42, $databaseValue);
+        static::assertSame(42, $databaseValue);
     }
 
     public function testConvertToDatabaseValueNegativeString(): void
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue('-50', $this->mysqlPlatform);
 
-        self::assertSame(-50, $databaseValue);
+        static::assertSame(-50, $databaseValue);
     }
 
     public function testConvertToDatabaseValueOutOfRangeHighThrows(): void
@@ -164,35 +166,35 @@ class TinyintTypeTest extends AbstractTestCase
     {
         $phpValue = $this->tinyintType->convertToPHPValue(null, $this->mysqlPlatform);
 
-        self::assertNull($phpValue);
+        static::assertNull($phpValue);
     }
 
     public function testConvertToPhpValueInt(): void
     {
         $phpValue = $this->tinyintType->convertToPHPValue(42, $this->mysqlPlatform);
 
-        self::assertSame(42, $phpValue);
+        static::assertSame(42, $phpValue);
     }
 
     public function testConvertToPhpValueString(): void
     {
         $phpValue = $this->tinyintType->convertToPHPValue('100', $this->mysqlPlatform);
 
-        self::assertSame(100, $phpValue);
+        static::assertSame(100, $phpValue);
     }
 
     public function testGetBindingType(): void
     {
         $parameterType = $this->tinyintType->getBindingType();
 
-        self::assertSame(ParameterType::INTEGER, $parameterType);
+        static::assertSame(ParameterType::INTEGER, $parameterType);
     }
 
     public function testConvertToDatabaseValueBoundaryMinSigned(): void
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue(-128, $this->mysqlPlatform);
 
-        self::assertSame(-128, $databaseValue);
+        static::assertSame(-128, $databaseValue);
     }
 
     public function testConvertToDatabaseValueBoundaryMinSignedMinus1Throws(): void
@@ -207,14 +209,14 @@ class TinyintTypeTest extends AbstractTestCase
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue(127, $this->mysqlPlatform);
 
-        self::assertSame(127, $databaseValue);
+        static::assertSame(127, $databaseValue);
     }
 
     public function testConvertToDatabaseValueBoundaryMaxUnsigned(): void
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue(255, $this->mysqlPlatform);
 
-        self::assertSame(255, $databaseValue);
+        static::assertSame(255, $databaseValue);
     }
 
     public function testConvertToDatabaseValueBoundaryMaxUnsignedPlus1Throws(): void
@@ -229,28 +231,28 @@ class TinyintTypeTest extends AbstractTestCase
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue(0, $this->mysqlPlatform);
 
-        self::assertSame(0, $databaseValue);
+        static::assertSame(0, $databaseValue);
     }
 
     public function testConvertToDatabaseValueStringBoundaryMinSigned(): void
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue('-128', $this->mysqlPlatform);
 
-        self::assertSame(-128, $databaseValue);
+        static::assertSame(-128, $databaseValue);
     }
 
     public function testConvertToDatabaseValueStringBoundaryMaxSigned(): void
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue('127', $this->mysqlPlatform);
 
-        self::assertSame(127, $databaseValue);
+        static::assertSame(127, $databaseValue);
     }
 
     public function testConvertToDatabaseValueStringBoundaryMaxUnsigned(): void
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue('255', $this->mysqlPlatform);
 
-        self::assertSame(255, $databaseValue);
+        static::assertSame(255, $databaseValue);
     }
 
     public function testConvertToDatabaseValueStringBoundaryMaxUnsignedPlus1Throws(): void
@@ -265,7 +267,7 @@ class TinyintTypeTest extends AbstractTestCase
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue('0', $this->mysqlPlatform);
 
-        self::assertSame(0, $databaseValue);
+        static::assertSame(0, $databaseValue);
     }
 
     public function testConvertToDatabaseValueBoolThrows(): void
@@ -312,14 +314,14 @@ class TinyintTypeTest extends AbstractTestCase
     {
         $phpValue = $this->tinyintType->convertToPHPValue(0, $this->mysqlPlatform);
 
-        self::assertSame(0, $phpValue);
+        static::assertSame(0, $phpValue);
     }
 
     public function testConvertToPhpValueNegativeString(): void
     {
         $phpValue = $this->tinyintType->convertToPHPValue('-50', $this->mysqlPlatform);
 
-        self::assertSame(-50, $phpValue);
+        static::assertSame(-50, $phpValue);
     }
 
     public function testConvertToPhpValueFloatThrows(): void
@@ -366,14 +368,14 @@ class TinyintTypeTest extends AbstractTestCase
     {
         $sqlDeclaration = $this->tinyintType->getSQLDeclaration(['unsigned' => false], $this->mysqlPlatform);
 
-        self::assertSame('TINYINT', $sqlDeclaration);
+        static::assertSame('TINYINT', $sqlDeclaration);
     }
 
     public function testConvertToPhpValueStringBoundaryMinSigned(): void
     {
         $phpValue = $this->tinyintType->convertToPHPValue('-128', $this->mysqlPlatform);
 
-        self::assertSame(-128, $phpValue);
+        static::assertSame(-128, $phpValue);
     }
 
     public function testConvertToPhpValueStringBoundaryMinSignedMinus1Throws(): void
@@ -388,7 +390,7 @@ class TinyintTypeTest extends AbstractTestCase
     {
         $phpValue = $this->tinyintType->convertToPHPValue('255', $this->mysqlPlatform);
 
-        self::assertSame(255, $phpValue);
+        static::assertSame(255, $phpValue);
     }
 
     public function testConvertToPhpValueStringBoundaryMaxUnsignedPlus1Throws(): void

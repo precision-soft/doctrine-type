@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v3.4.0] - 2026-04-16
+
+### Fixed
+
+- `AbstractEnumType::convertToDatabaseValue()` — validates that the passed enum belongs to the configured `getEnumClass()`, throwing `InvalidTypeValueException` when a mismatched enum is passed (previously any `UnitEnum`/`BackedEnum` was silently accepted regardless of class)
+- `TinyintType::getSQLDeclaration()` — throws base `Exception` instead of `InvalidTypeValueException` for unsupported platforms; the unsupported-platform error is a configuration issue, not a value error
+
+### Changed
+
+- `getSQLDeclaration()` shared logic extracted into `AbstractPhpEnumType::buildSqlDeclaration()` — `AbstractEnumType` and `AbstractSetType` now delegate instead of duplicating the quoted-values + platform-check + fallback logic
+- `TinyintType::parseIntValue()` visibility widened from `private` to `protected` for subclass extensibility
+- Composer version constraints standardized to caret notation: `doctrine/dbal: ^4.0`, `friendsofphp/php-cs-fixer: ^3.0`
+- PHPDoc simplified: `UnitEnum|BackedEnum` → `UnitEnum` (redundant since `BackedEnum extends UnitEnum`)
+- All test classes annotated with `final` and `@internal` per project convention
+- All test assertions changed from `self::assert*()` to `static::assert*()`
+- `README.md` — corrected `TinyintType::getSQLDeclaration()` documented exception type to `Exception`
+
+### Added
+
+- `AbstractEnumType` wrong-enum-class test coverage
+- `ExceptionTest` — `DoctrineDbalException` interface assertion
+- SQLite platform test coverage for ENUM and SET fallback
+
 ## [v3.3.0] - 2026-04-16
 
 ### Fixed
@@ -262,7 +285,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `TinyintType` for MySQL `TINYINT` columns
 - Project-specific exception hierarchy
 
-[Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.3.0...HEAD
+[Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.4.0...HEAD
+
+[v3.4.0]: https://github.com/precision-soft/doctrine-type/compare/v3.3.0...v3.4.0
 
 [v3.3.0]: https://github.com/precision-soft/doctrine-type/compare/v3.2.1...v3.3.0
 

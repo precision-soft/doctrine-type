@@ -18,7 +18,8 @@ use PrecisionSoft\Symfony\Phpunit\MockDto;
 use PrecisionSoft\Symfony\Phpunit\TestCase\AbstractTestCase;
 use stdClass;
 
-class DateTimeTypeTest extends AbstractTestCase
+/** @internal */
+final class DateTimeTypeTest extends AbstractTestCase
 {
     private DateTimeType $dateTimeType;
     private MySQLPlatform $mysqlPlatform;
@@ -40,28 +41,28 @@ class DateTimeTypeTest extends AbstractTestCase
     {
         $sqlDeclaration = $this->dateTimeType->getSQLDeclaration([], $this->mysqlPlatform);
 
-        self::assertSame('DATETIME', $sqlDeclaration);
+        static::assertSame('DATETIME', $sqlDeclaration);
     }
 
     public function testGetSqlDeclarationWithUpdateMysql(): void
     {
         $sqlDeclaration = $this->dateTimeType->getSQLDeclaration(['update' => true], $this->mysqlPlatform);
 
-        self::assertSame('DATETIME ON UPDATE CURRENT_TIMESTAMP', $sqlDeclaration);
+        static::assertSame('DATETIME ON UPDATE CURRENT_TIMESTAMP', $sqlDeclaration);
     }
 
     public function testGetSqlDeclarationWithEmptyUpdateMysql(): void
     {
         $sqlDeclaration = $this->dateTimeType->getSQLDeclaration(['update' => ''], $this->mysqlPlatform);
 
-        self::assertSame('DATETIME', $sqlDeclaration);
+        static::assertSame('DATETIME', $sqlDeclaration);
     }
 
     public function testGetSqlDeclarationWithNullUpdateMysql(): void
     {
         $sqlDeclaration = $this->dateTimeType->getSQLDeclaration(['update' => null], $this->mysqlPlatform);
 
-        self::assertSame('DATETIME', $sqlDeclaration);
+        static::assertSame('DATETIME', $sqlDeclaration);
     }
 
     public function testGetSqlDeclarationWithUpdateNonMysql(): void
@@ -71,7 +72,7 @@ class DateTimeTypeTest extends AbstractTestCase
             new PostgreSQLPlatform(),
         );
 
-        self::assertStringNotContainsString('ON UPDATE', $sqlDeclaration);
+        static::assertStringNotContainsString('ON UPDATE', $sqlDeclaration);
     }
 
     public function testConvertToDatabaseValueNull(): void
@@ -79,7 +80,7 @@ class DateTimeTypeTest extends AbstractTestCase
         $databaseValue = $this->dateTimeType->convertToDatabaseValue(null, $this->mysqlPlatform);
 
         /** @phpstan-ignore staticMethod.alreadyNarrowedType */
-        self::assertNull($databaseValue);
+        static::assertNull($databaseValue);
     }
 
     public function testConvertToDatabaseValueDateTime(): void
@@ -88,7 +89,7 @@ class DateTimeTypeTest extends AbstractTestCase
 
         $databaseValue = $this->dateTimeType->convertToDatabaseValue($dateTime, $this->mysqlPlatform);
 
-        self::assertSame('2026-04-14 12:00:00', $databaseValue);
+        static::assertSame('2026-04-14 12:00:00', $databaseValue);
     }
 
     public function testConvertToDatabaseValueInvalidTypeThrows(): void
@@ -103,15 +104,15 @@ class DateTimeTypeTest extends AbstractTestCase
         $phpValue = $this->dateTimeType->convertToPHPValue(null, $this->mysqlPlatform);
 
         /** @phpstan-ignore staticMethod.alreadyNarrowedType */
-        self::assertNull($phpValue);
+        static::assertNull($phpValue);
     }
 
     public function testConvertToPhpValueString(): void
     {
         $phpValue = $this->dateTimeType->convertToPHPValue('2026-04-14 12:00:00', $this->mysqlPlatform);
 
-        self::assertInstanceOf(DateTime::class, $phpValue);
-        self::assertSame('2026-04-14 12:00:00', $phpValue->format('Y-m-d H:i:s'));
+        static::assertInstanceOf(DateTime::class, $phpValue);
+        static::assertSame('2026-04-14 12:00:00', $phpValue->format('Y-m-d H:i:s'));
     }
 
     public function testConvertToPhpValueDateTimePassthrough(): void
@@ -120,7 +121,7 @@ class DateTimeTypeTest extends AbstractTestCase
 
         $phpValue = $this->dateTimeType->convertToPHPValue($dateTime, $this->mysqlPlatform);
 
-        self::assertSame($dateTime, $phpValue);
+        static::assertSame($dateTime, $phpValue);
     }
 
     public function testConvertToPhpValueInvalidFormatThrows(): void

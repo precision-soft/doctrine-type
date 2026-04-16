@@ -11,6 +11,7 @@ namespace PrecisionSoft\Doctrine\Type\Test\Contract;
 use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use PrecisionSoft\Doctrine\Type\Contract\AbstractPhpEnumType;
 use PrecisionSoft\Doctrine\Type\Contract\AbstractSetType;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
@@ -24,7 +25,8 @@ use PrecisionSoft\Symfony\Phpunit\MockDto;
 use PrecisionSoft\Symfony\Phpunit\TestCase\AbstractTestCase;
 use stdClass;
 
-class AbstractSetTypeTest extends AbstractTestCase
+/** @internal */
+final class AbstractSetTypeTest extends AbstractTestCase
 {
     private MySQLPlatform $mysqlPlatform;
 
@@ -52,7 +54,7 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testBackedSetType = new TestBackedSetType();
         $databaseValue = $testBackedSetType->convertToDatabaseValue(null, $this->mysqlPlatform);
 
-        self::assertNull($databaseValue);
+        static::assertNull($databaseValue);
     }
 
     public function testConvertToDatabaseValueEmptyArray(): void
@@ -60,7 +62,7 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testBackedSetType = new TestBackedSetType();
         $databaseValue = $testBackedSetType->convertToDatabaseValue([], $this->mysqlPlatform);
 
-        self::assertNull($databaseValue);
+        static::assertNull($databaseValue);
     }
 
     public function testConvertToDatabaseValueSingleBackedEnum(): void
@@ -68,7 +70,7 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testBackedSetType = new TestBackedSetType();
         $databaseValue = $testBackedSetType->convertToDatabaseValue([TestBackedEnum::first], $this->mysqlPlatform);
 
-        self::assertSame('first_value', $databaseValue);
+        static::assertSame('first_value', $databaseValue);
     }
 
     public function testConvertToDatabaseValueMultipleBackedEnums(): void
@@ -79,7 +81,7 @@ class AbstractSetTypeTest extends AbstractTestCase
             $this->mysqlPlatform,
         );
 
-        self::assertSame('first_value,third_value', $databaseValue);
+        static::assertSame('first_value,third_value', $databaseValue);
     }
 
     public function testConvertToDatabaseValueSimpleEnums(): void
@@ -90,7 +92,7 @@ class AbstractSetTypeTest extends AbstractTestCase
             $this->mysqlPlatform,
         );
 
-        self::assertSame('alpha,gamma', $databaseValue);
+        static::assertSame('alpha,gamma', $databaseValue);
     }
 
     public function testConvertToPhpValueNull(): void
@@ -98,7 +100,7 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testBackedSetType = new TestBackedSetType();
         $phpValue = $testBackedSetType->convertToPHPValue(null, $this->mysqlPlatform);
 
-        self::assertNull($phpValue);
+        static::assertNull($phpValue);
     }
 
     public function testConvertToPhpValueEmptyString(): void
@@ -106,7 +108,7 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testBackedSetType = new TestBackedSetType();
         $phpValue = $testBackedSetType->convertToPHPValue('', $this->mysqlPlatform);
 
-        self::assertNull($phpValue);
+        static::assertNull($phpValue);
     }
 
     public function testConvertToPhpValueSingle(): void
@@ -114,7 +116,7 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testBackedSetType = new TestBackedSetType();
         $phpValue = $testBackedSetType->convertToPHPValue('first_value', $this->mysqlPlatform);
 
-        self::assertSame([TestBackedEnum::first], $phpValue);
+        static::assertSame([TestBackedEnum::first], $phpValue);
     }
 
     public function testConvertToPhpValueMultiple(): void
@@ -122,7 +124,7 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testBackedSetType = new TestBackedSetType();
         $phpValue = $testBackedSetType->convertToPHPValue('first_value,third_value', $this->mysqlPlatform);
 
-        self::assertSame([TestBackedEnum::first, TestBackedEnum::third], $phpValue);
+        static::assertSame([TestBackedEnum::first, TestBackedEnum::third], $phpValue);
     }
 
     public function testGetSqlDeclarationMysql(): void
@@ -130,8 +132,8 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testBackedSetType = new TestBackedSetType();
         $sqlDeclaration = $testBackedSetType->getSQLDeclaration([], $this->mysqlPlatform);
 
-        self::assertStringStartsWith('SET(', $sqlDeclaration);
-        self::assertStringContainsString('first_value', $sqlDeclaration);
+        static::assertStringStartsWith('SET(', $sqlDeclaration);
+        static::assertStringContainsString('first_value', $sqlDeclaration);
     }
 
     public function testGetSqlDeclarationNonMysql(): void
@@ -139,8 +141,8 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testBackedSetType = new TestBackedSetType();
         $sqlDeclaration = $testBackedSetType->getSQLDeclaration([], new PostgreSQLPlatform());
 
-        self::assertStringNotContainsString('SET(', $sqlDeclaration);
-        self::assertStringContainsString('VARCHAR(255)', $sqlDeclaration);
+        static::assertStringNotContainsString('SET(', $sqlDeclaration);
+        static::assertStringContainsString('VARCHAR(255)', $sqlDeclaration);
     }
 
     public function testConvertToDatabaseValueWithCommaThrows(): void
@@ -200,7 +202,7 @@ class AbstractSetTypeTest extends AbstractTestCase
 
         $databaseValue = $anonymousSetType->convertToDatabaseValue([null, 'valid', null, 'other'], $this->mysqlPlatform);
 
-        self::assertSame('valid,other', $databaseValue);
+        static::assertSame('valid,other', $databaseValue);
     }
 
     public function testConvertToDatabaseValueAllNullsReturnsNull(): void
@@ -225,7 +227,7 @@ class AbstractSetTypeTest extends AbstractTestCase
 
         $databaseValue = $anonymousSetType->convertToDatabaseValue([null, null], $this->mysqlPlatform);
 
-        self::assertNull($databaseValue);
+        static::assertNull($databaseValue);
     }
 
     public function testConvertToDatabaseValueDuplicateBackedEnumsAreDeduplicated(): void
@@ -236,7 +238,7 @@ class AbstractSetTypeTest extends AbstractTestCase
             $this->mysqlPlatform,
         );
 
-        self::assertSame('first_value,second_value', $databaseValue);
+        static::assertSame('first_value,second_value', $databaseValue);
     }
 
     public function testConvertToDatabaseValueDeduplicatesSimpleEnums(): void
@@ -247,7 +249,7 @@ class AbstractSetTypeTest extends AbstractTestCase
             $this->mysqlPlatform,
         );
 
-        self::assertSame('alpha,beta', $databaseValue);
+        static::assertSame('alpha,beta', $databaseValue);
     }
 
     public function testConvertToDatabaseValueAllSameValuesDeduplicatesToSingle(): void
@@ -258,7 +260,7 @@ class AbstractSetTypeTest extends AbstractTestCase
             $this->mysqlPlatform,
         );
 
-        self::assertSame('first_value', $databaseValue);
+        static::assertSame('first_value', $databaseValue);
     }
 
     public function testConvertToPhpValueSimpleEnum(): void
@@ -266,7 +268,7 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testSimpleSetType = new TestSimpleSetType();
         $phpValue = $testSimpleSetType->convertToPHPValue('alpha,gamma', $this->mysqlPlatform);
 
-        self::assertSame([TestSimpleEnum::alpha, TestSimpleEnum::gamma], $phpValue);
+        static::assertSame([TestSimpleEnum::alpha, TestSimpleEnum::gamma], $phpValue);
     }
 
     public function testConvertToPhpValueSingleSimpleEnum(): void
@@ -274,7 +276,7 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testSimpleSetType = new TestSimpleSetType();
         $phpValue = $testSimpleSetType->convertToPHPValue('beta', $this->mysqlPlatform);
 
-        self::assertSame([TestSimpleEnum::beta], $phpValue);
+        static::assertSame([TestSimpleEnum::beta], $phpValue);
     }
 
     public function testGetSqlDeclarationMysqlSimpleSet(): void
@@ -282,10 +284,10 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testSimpleSetType = new TestSimpleSetType();
         $sqlDeclaration = $testSimpleSetType->getSQLDeclaration([], $this->mysqlPlatform);
 
-        self::assertStringStartsWith('SET(', $sqlDeclaration);
-        self::assertStringContainsString('alpha', $sqlDeclaration);
-        self::assertStringContainsString('beta', $sqlDeclaration);
-        self::assertStringContainsString('gamma', $sqlDeclaration);
+        static::assertStringStartsWith('SET(', $sqlDeclaration);
+        static::assertStringContainsString('alpha', $sqlDeclaration);
+        static::assertStringContainsString('beta', $sqlDeclaration);
+        static::assertStringContainsString('gamma', $sqlDeclaration);
     }
 
     public function testGetSqlDeclarationNonMysqlSimpleSet(): void
@@ -293,8 +295,8 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testSimpleSetType = new TestSimpleSetType();
         $sqlDeclaration = $testSimpleSetType->getSQLDeclaration([], new PostgreSQLPlatform());
 
-        self::assertStringNotContainsString('SET(', $sqlDeclaration);
-        self::assertStringContainsString('VARCHAR(255)', $sqlDeclaration);
+        static::assertStringNotContainsString('SET(', $sqlDeclaration);
+        static::assertStringContainsString('VARCHAR(255)', $sqlDeclaration);
     }
 
     public function testConvertToDatabaseValueMixedNullAndDuplicates(): void
@@ -319,7 +321,7 @@ class AbstractSetTypeTest extends AbstractTestCase
 
         $databaseValue = $anonymousSetType->convertToDatabaseValue([null, 'a', null, 'a', 'b'], $this->mysqlPlatform);
 
-        self::assertSame('a,b', $databaseValue);
+        static::assertSame('a,b', $databaseValue);
     }
 
     public function testConvertToPhpValueNonStringThrows(): void
@@ -339,7 +341,7 @@ class AbstractSetTypeTest extends AbstractTestCase
 
         $phpValue = $testBackedSetType->convertToPHPValue($alreadyHydrated, $this->mysqlPlatform);
 
-        self::assertSame($alreadyHydrated, $phpValue);
+        static::assertSame($alreadyHydrated, $phpValue);
     }
 
     public function testConvertToPhpValueObjectThrows(): void
@@ -357,7 +359,7 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testBackedSetType = new TestBackedSetType();
         $phpValue = $testBackedSetType->convertToPHPValue(' first_value , third_value ', $this->mysqlPlatform);
 
-        self::assertSame([TestBackedEnum::first, TestBackedEnum::third], $phpValue);
+        static::assertSame([TestBackedEnum::first, TestBackedEnum::third], $phpValue);
     }
 
     public function testConvertToDatabaseValueNonStringIntegerValues(): void
@@ -382,7 +384,7 @@ class AbstractSetTypeTest extends AbstractTestCase
 
         $databaseValue = $anonymousSetType->convertToDatabaseValue([1, 2, 3], $this->mysqlPlatform);
 
-        self::assertSame('1,2,3', $databaseValue);
+        static::assertSame('1,2,3', $databaseValue);
     }
 
     public function testInvalidSimpleEnumValueThrows(): void
@@ -439,8 +441,8 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testBackedSetType = new TestBackedSetType();
         $sqlDeclaration = $testBackedSetType->getSQLDeclaration([], new MariaDBPlatform());
 
-        self::assertStringStartsWith('SET(', $sqlDeclaration);
-        self::assertStringContainsString('first_value', $sqlDeclaration);
+        static::assertStringStartsWith('SET(', $sqlDeclaration);
+        static::assertStringContainsString('first_value', $sqlDeclaration);
     }
 
     public function testIntBackedEnumSetConvertRoundTrip(): void
@@ -453,8 +455,8 @@ class AbstractSetTypeTest extends AbstractTestCase
         );
         $phpValue = $testIntBackedSetType->convertToPHPValue($databaseValue, $this->mysqlPlatform);
 
-        self::assertSame('1,10', $databaseValue);
-        self::assertSame([TestIntBackedEnum::low, TestIntBackedEnum::high], $phpValue);
+        static::assertSame('1,10', $databaseValue);
+        static::assertSame([TestIntBackedEnum::low, TestIntBackedEnum::high], $phpValue);
     }
 
     public function testIntBackedEnumSetGetSqlDeclarationMysqlQuotesNumericValues(): void
@@ -462,10 +464,19 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testIntBackedSetType = new TestIntBackedSetType();
         $sqlDeclaration = $testIntBackedSetType->getSQLDeclaration([], $this->mysqlPlatform);
 
-        self::assertStringStartsWith('SET(', $sqlDeclaration);
-        self::assertStringContainsString("'1'", $sqlDeclaration);
-        self::assertStringContainsString("'5'", $sqlDeclaration);
-        self::assertStringContainsString("'10'", $sqlDeclaration);
+        static::assertStringStartsWith('SET(', $sqlDeclaration);
+        static::assertStringContainsString("'1'", $sqlDeclaration);
+        static::assertStringContainsString("'5'", $sqlDeclaration);
+        static::assertStringContainsString("'10'", $sqlDeclaration);
+    }
+
+    public function testGetSqlDeclarationSqlite(): void
+    {
+        $testBackedSetType = new TestBackedSetType();
+        $sqlDeclaration = $testBackedSetType->getSQLDeclaration([], new SQLitePlatform());
+
+        static::assertStringNotContainsString('SET(', $sqlDeclaration);
+        static::assertStringContainsString('VARCHAR(255)', $sqlDeclaration);
     }
 
     public function testConvertToDatabaseValueNullElementInTypedEnumSetThrows(): void

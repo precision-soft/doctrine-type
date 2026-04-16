@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace PrecisionSoft\Doctrine\Type\Test\Exception;
 
+use Doctrine\DBAL\Exception as DoctrineDbalException;
 use Exception as BaseException;
 use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
@@ -15,27 +16,35 @@ use PrecisionSoft\Symfony\Phpunit\MockDto;
 use PrecisionSoft\Symfony\Phpunit\TestCase\AbstractTestCase;
 use stdClass;
 
-class ExceptionTest extends AbstractTestCase
+/** @internal */
+final class ExceptionTest extends AbstractTestCase
 {
     public static function getMockDto(): MockDto
     {
         return new MockDto(stdClass::class);
     }
 
+    public function testExceptionImplementsDoctrineDbalException(): void
+    {
+        $exception = new Exception('test message');
+
+        static::assertInstanceOf(DoctrineDbalException::class, $exception);
+    }
+
     public function testExceptionExtendsBaseException(): void
     {
         $exception = new Exception('test message');
 
-        self::assertInstanceOf(BaseException::class, $exception);
-        self::assertSame('test message', $exception->getMessage());
+        static::assertInstanceOf(BaseException::class, $exception);
+        static::assertSame('test message', $exception->getMessage());
     }
 
     public function testInvalidTypeValueExceptionExtendsException(): void
     {
         $invalidTypeValueException = new InvalidTypeValueException('invalid value');
 
-        self::assertInstanceOf(Exception::class, $invalidTypeValueException);
-        self::assertInstanceOf(BaseException::class, $invalidTypeValueException);
-        self::assertSame('invalid value', $invalidTypeValueException->getMessage());
+        static::assertInstanceOf(Exception::class, $invalidTypeValueException);
+        static::assertInstanceOf(BaseException::class, $invalidTypeValueException);
+        static::assertSame('invalid value', $invalidTypeValueException->getMessage());
     }
 }

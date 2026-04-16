@@ -8,8 +8,6 @@ declare(strict_types=1);
 
 namespace PrecisionSoft\Doctrine\Type\Contract;
 
-use BackedEnum;
-use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
@@ -99,7 +97,7 @@ abstract class AbstractSetType extends AbstractPhpEnumType
     }
 
     /**
-     * @return array<int, UnitEnum|BackedEnum>|null
+     * @return array<int, UnitEnum>|null
      * @throws InvalidTypeValueException if the database value is not a string or contains an invalid enum case
      */
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?array
@@ -131,22 +129,6 @@ abstract class AbstractSetType extends AbstractPhpEnumType
      */
     public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
-        $quotedSetValues = [];
-
-        foreach ($this->getValues() as $enumCase) {
-            $quotedSetValues[] = $platform->quoteStringLiteral(
-                (string)$this->convertValueToDatabase($enumCase),
-            );
-        }
-
-        if (true === $platform instanceof AbstractMySQLPlatform) {
-            return 'SET(' . \implode(',', $quotedSetValues) . ')';
-        }
-
-        /** @info non-MySQL platforms need `length` and `name` defaults, otherwise `getStringTypeDeclarationSQL` may fail or produce invalid SQL */
-        $column['length'] ??= 255;
-        $column['name'] ??= '';
-
-        return $platform->getStringTypeDeclarationSQL($column);
+        return $this->buildSqlDeclaration('SET', $column, $platform);
     }
 }

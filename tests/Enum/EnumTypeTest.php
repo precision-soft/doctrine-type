@@ -13,7 +13,8 @@ use PrecisionSoft\Symfony\Phpunit\MockDto;
 use PrecisionSoft\Symfony\Phpunit\TestCase\AbstractTestCase;
 use stdClass;
 
-class EnumTypeTest extends AbstractTestCase
+/** @internal */
+final class EnumTypeTest extends AbstractTestCase
 {
     public static function getMockDto(): MockDto
     {
@@ -24,21 +25,21 @@ class EnumTypeTest extends AbstractTestCase
     {
         $enumTypeCases = EnumType::cases();
 
-        self::assertCount(3, $enumTypeCases);
+        static::assertCount(3, $enumTypeCases);
     }
 
     public function testNotEnumCase(): void
     {
-        self::assertSame('notEnum', EnumType::notEnum->name);
+        static::assertSame('notEnum', EnumType::notEnum->name);
     }
 
     public function testSimpleCase(): void
     {
-        self::assertSame('simple', EnumType::simple->name);
+        static::assertSame('simple', EnumType::simple->name);
     }
 
     public function testBackedCase(): void
     {
-        self::assertSame('backed', EnumType::backed->name);
+        static::assertSame('backed', EnumType::backed->name);
     }
 }

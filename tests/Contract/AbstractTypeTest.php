@@ -14,7 +14,8 @@ use PrecisionSoft\Symfony\Phpunit\MockDto;
 use PrecisionSoft\Symfony\Phpunit\TestCase\AbstractTestCase;
 use stdClass;
 
-class AbstractTypeTest extends AbstractTestCase
+/** @internal */
+final class AbstractTypeTest extends AbstractTestCase
 {
     public static function getMockDto(): MockDto
     {
@@ -25,27 +26,27 @@ class AbstractTypeTest extends AbstractTestCase
     {
         $defaultName = TestConcreteType::getDefaultName();
 
-        self::assertSame('TestConcreteType', $defaultName);
+        static::assertSame('TestConcreteType', $defaultName);
     }
 
     public function testGetDefaultNamePrefixReturnsNull(): void
     {
         $defaultNamePrefix = TestConcreteType::getDefaultNamePrefix();
 
-        self::assertNull($defaultNamePrefix);
+        static::assertNull($defaultNamePrefix);
     }
 
     public function testGetDefaultNameWithPrefixReturnsPrefixedShortClassName(): void
     {
         $defaultName = TestPrefixedType::getDefaultName();
 
-        self::assertSame('myprefix_TestPrefixedType', $defaultName);
+        static::assertSame('myprefix_TestPrefixedType', $defaultName);
     }
 
     public function testGetDefaultNamePrefixReturnsPrefix(): void
     {
         $defaultNamePrefix = TestPrefixedType::getDefaultNamePrefix();
 
-        self::assertSame('myprefix_', $defaultNamePrefix);
+        static::assertSame('myprefix_', $defaultNamePrefix);
     }
 }

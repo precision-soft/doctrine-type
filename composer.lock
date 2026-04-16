@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5384d5cfe3b4c0785085b695a59cfdfd",
+    "content-hash": "319f188c7b230c41d73eb1e69cad4be6",
     "packages": [
         {
             "name": "doctrine/dbal",
@@ -1018,16 +1018,16 @@
         },
         {
             "name": "precision-soft/symfony-phpunit",
-            "version": "v3.3.0",
+            "version": "v3.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/precision-soft/symfony-phpunit.git",
-                "reference": "3a7629fd669f6574630c33db67a0c10d9451b5ef"
+                "reference": "6d53c8ef9c394b40b4acc0af8a38e0eef4c013e0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/precision-soft/symfony-phpunit/zipball/3a7629fd669f6574630c33db67a0c10d9451b5ef",
-                "reference": "3a7629fd669f6574630c33db67a0c10d9451b5ef",
+                "url": "https://api.github.com/repos/precision-soft/symfony-phpunit/zipball/6d53c8ef9c394b40b4acc0af8a38e0eef4c013e0",
+                "reference": "6d53c8ef9c394b40b4acc0af8a38e0eef4c013e0",
                 "shasum": ""
             },
             "require": {
@@ -1074,9 +1074,9 @@
             ],
             "support": {
                 "issues": "https://github.com/precision-soft/symfony-phpunit/issues",
-                "source": "https://github.com/precision-soft/symfony-phpunit/tree/v3.3.0"
+                "source": "https://github.com/precision-soft/symfony-phpunit/tree/v3.3.1"
             },
-            "time": "2026-04-16T05:29:24+00:00"
+            "time": "2026-04-16T07:14:07+00:00"
         },
         {
             "name": "psr/container",

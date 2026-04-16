@@ -24,7 +24,8 @@ use PrecisionSoft\Symfony\Phpunit\TestCase\AbstractTestCase;
 use stdClass;
 use UnitEnum;
 
-class AbstractPhpEnumTypeTest extends AbstractTestCase
+/** @internal */
+final class AbstractPhpEnumTypeTest extends AbstractTestCase
 {
     private MySQLPlatform $mysqlPlatform;
 
@@ -52,7 +53,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $testBackedEnumType = new TestBackedEnumType();
         $databaseValue = $testBackedEnumType->convertToDatabaseValue(TestBackedEnum::second, $this->mysqlPlatform);
 
-        self::assertSame('second_value', $databaseValue);
+        static::assertSame('second_value', $databaseValue);
     }
 
     public function testBackedEnumConvertToDatabaseValueInvalidThrows(): void
@@ -69,7 +70,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $testSimpleEnumType = new TestSimpleEnumType();
         $databaseValue = $testSimpleEnumType->convertToDatabaseValue(TestSimpleEnum::beta, $this->mysqlPlatform);
 
-        self::assertSame('beta', $databaseValue);
+        static::assertSame('beta', $databaseValue);
     }
 
     public function testSimpleEnumConvertToDatabaseValueInvalidThrows(): void
@@ -86,7 +87,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $testBackedEnumType = new TestBackedEnumType();
         $phpValue = $testBackedEnumType->convertToPHPValue('second_value', $this->mysqlPlatform);
 
-        self::assertSame(TestBackedEnum::second, $phpValue);
+        static::assertSame(TestBackedEnum::second, $phpValue);
     }
 
     public function testBackedEnumConvertToPhpValueInvalidThrows(): void
@@ -103,7 +104,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $testSimpleEnumType = new TestSimpleEnumType();
         $phpValue = $testSimpleEnumType->convertToPHPValue('beta', $this->mysqlPlatform);
 
-        self::assertSame(TestSimpleEnum::beta, $phpValue);
+        static::assertSame(TestSimpleEnum::beta, $phpValue);
     }
 
     public function testSimpleEnumConvertToPhpValueInvalidThrows(): void
@@ -140,7 +141,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $testBackedEnumType = new TestBackedEnumType();
         $enumValues = $testBackedEnumType->getValues();
 
-        self::assertCount(3, $enumValues);
+        static::assertCount(3, $enumValues);
     }
 
     public function testNoEnumClassGetValuesThrows(): void
@@ -195,7 +196,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
 
         $enumValues = $testBackedEnumType->getValues();
 
-        self::assertCount(3, $enumValues);
+        static::assertCount(3, $enumValues);
     }
 
     public function testNotEnumConvertToDatabaseValuePassesThrough(): void
@@ -204,7 +205,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
 
         $databaseValue = $anonymousEnumType->convertToDatabaseValue('raw_value', $this->mysqlPlatform);
 
-        self::assertSame('raw_value', $databaseValue);
+        static::assertSame('raw_value', $databaseValue);
     }
 
     public function testNotEnumConvertToPhpValuePassesThrough(): void
@@ -213,7 +214,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
 
         $phpValue = $anonymousEnumType->convertToPHPValue('raw_value', $this->mysqlPlatform);
 
-        self::assertSame('raw_value', $phpValue);
+        static::assertSame('raw_value', $phpValue);
     }
 
     public function testGetEnumValuesWithNotEnumThrows(): void
@@ -240,8 +241,8 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
 
         $secondDatabaseValue = $testBackedEnumType->convertToDatabaseValue(TestBackedEnum::second, $this->mysqlPlatform);
 
-        self::assertSame('first_value', $firstDatabaseValue);
-        self::assertSame('second_value', $secondDatabaseValue);
+        static::assertSame('first_value', $firstDatabaseValue);
+        static::assertSame('second_value', $secondDatabaseValue);
     }
 
     public function testSimpleEnumGetEnumValues(): void
@@ -249,24 +250,24 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $testSimpleEnumType = new TestSimpleEnumType();
         $enumValues = $testSimpleEnumType->getValues();
 
-        self::assertCount(3, $enumValues);
-        self::assertSame(TestSimpleEnum::alpha, $enumValues[0]);
-        self::assertSame(TestSimpleEnum::beta, $enumValues[1]);
-        self::assertSame(TestSimpleEnum::gamma, $enumValues[2]);
+        static::assertCount(3, $enumValues);
+        static::assertSame(TestSimpleEnum::alpha, $enumValues[0]);
+        static::assertSame(TestSimpleEnum::beta, $enumValues[1]);
+        static::assertSame(TestSimpleEnum::gamma, $enumValues[2]);
     }
 
     public function testGetEnumClassReturnsNullByDefault(): void
     {
         $anonymousEnumType = new class extends AbstractEnumType {};
 
-        self::assertNull($anonymousEnumType->getEnumClass());
+        static::assertNull($anonymousEnumType->getEnumClass());
     }
 
     public function testBackedEnumGetEnumClassReturnsClass(): void
     {
         $testBackedEnumType = new TestBackedEnumType();
 
-        self::assertSame(TestBackedEnum::class, $testBackedEnumType->getEnumClass());
+        static::assertSame(TestBackedEnum::class, $testBackedEnumType->getEnumClass());
     }
 
     public function testIntBackedEnumConvertToDatabaseValue(): void
@@ -274,7 +275,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $testIntBackedEnumType = new TestIntBackedEnumType();
         $databaseValue = $testIntBackedEnumType->convertToDatabaseValue(TestIntBackedEnum::medium, $this->mysqlPlatform);
 
-        self::assertSame(5, $databaseValue);
+        static::assertSame(5, $databaseValue);
     }
 
     public function testIntBackedEnumConvertToPhpValue(): void
@@ -282,7 +283,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $testIntBackedEnumType = new TestIntBackedEnumType();
         $phpValue = $testIntBackedEnumType->convertToPHPValue('5', $this->mysqlPlatform);
 
-        self::assertSame(TestIntBackedEnum::medium, $phpValue);
+        static::assertSame(TestIntBackedEnum::medium, $phpValue);
     }
 
     public function testIntBackedEnumConvertToPhpValueInvalidThrows(): void
@@ -299,7 +300,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $testBackedEnumType = new TestBackedEnumType();
         $phpValue = $testBackedEnumType->convertToPHPValue(TestBackedEnum::second, $this->mysqlPlatform);
 
-        self::assertSame(TestBackedEnum::second, $phpValue);
+        static::assertSame(TestBackedEnum::second, $phpValue);
     }
 
     public function testSimpleEnumConvertToPhpValuePassesAlreadyHydratedEnumThrough(): void
@@ -307,7 +308,7 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $testSimpleEnumType = new TestSimpleEnumType();
         $phpValue = $testSimpleEnumType->convertToPHPValue(TestSimpleEnum::beta, $this->mysqlPlatform);
 
-        self::assertSame(TestSimpleEnum::beta, $phpValue);
+        static::assertSame(TestSimpleEnum::beta, $phpValue);
     }
 
     public function testIntBackedEnumConvertToPhpValueNonIntStringThrows(): void
