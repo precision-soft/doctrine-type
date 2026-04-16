@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 namespace PrecisionSoft\Doctrine\Type\Test\Contract;
 
-use Doctrine\DBAL\Platforms\MySQLPlatform;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestConcreteType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestPrefixedType;
 use PrecisionSoft\Symfony\Phpunit\MockDto;
@@ -48,12 +47,5 @@ class AbstractTypeTest extends AbstractTestCase
         $defaultNamePrefix = TestPrefixedType::getDefaultNamePrefix();
 
         self::assertSame('myprefix_', $defaultNamePrefix);
-    }
-
-    public function testRequiresSqlCommentHintReturnsTrue(): void
-    {
-        $testConcreteType = new TestConcreteType();
-
-        self::assertSame(true, $testConcreteType->requiresSQLCommentHint(new MySQLPlatform()));
     }
 }

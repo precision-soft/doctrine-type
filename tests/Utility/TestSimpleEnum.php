@@ -13,4 +13,7 @@ enum TestSimpleEnum
     case alpha;
     case beta;
     case gamma;
+
+    /** @info intentional non-case class constant used by AbstractPhpEnumTypeTest to verify `getEnumByName()` rejects non-case constants */
+    public const NOT_A_CASE = 'not_a_case_value';
 }

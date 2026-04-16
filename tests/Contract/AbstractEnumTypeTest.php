@@ -8,11 +8,14 @@ declare(strict_types=1);
 
 namespace PrecisionSoft\Doctrine\Type\Test\Contract;
 
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use PrecisionSoft\Doctrine\Type\Contract\AbstractPhpEnumType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedEnum;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedEnumType;
+use PrecisionSoft\Doctrine\Type\Test\Utility\TestIntBackedEnum;
+use PrecisionSoft\Doctrine\Type\Test\Utility\TestIntBackedEnumType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnum;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnumType;
 use PrecisionSoft\Symfony\Phpunit\MockDto;
@@ -118,6 +121,7 @@ class AbstractEnumTypeTest extends AbstractTestCase
         $sqlDeclaration = $testBackedEnumType->getSQLDeclaration([], new PostgreSQLPlatform());
 
         self::assertStringNotContainsString('ENUM(', $sqlDeclaration);
+        self::assertStringContainsString('VARCHAR(255)', $sqlDeclaration);
     }
 
     public function testGetValues(): void
@@ -129,5 +133,36 @@ class AbstractEnumTypeTest extends AbstractTestCase
         self::assertSame(TestBackedEnum::first, $enumValues[0]);
         self::assertSame(TestBackedEnum::second, $enumValues[1]);
         self::assertSame(TestBackedEnum::third, $enumValues[2]);
+    }
+
+    public function testGetSqlDeclarationMariaDb(): void
+    {
+        $testBackedEnumType = new TestBackedEnumType();
+        $sqlDeclaration = $testBackedEnumType->getSQLDeclaration([], new MariaDBPlatform());
+
+        self::assertStringStartsWith('ENUM(', $sqlDeclaration);
+        self::assertStringContainsString('first_value', $sqlDeclaration);
+    }
+
+    public function testIntBackedEnumGetSqlDeclarationMysqlQuotesNumericValues(): void
+    {
+        $testIntBackedEnumType = new TestIntBackedEnumType();
+        $sqlDeclaration = $testIntBackedEnumType->getSQLDeclaration([], $this->mysqlPlatform);
+
+        /** @info MySQL ENUM stores values as strings; even int-backed enum cases must be quoted to avoid being treated as index references (e.g. `ENUM(1,5,10)` means case-at-position-1 not value=1) */
+        self::assertStringContainsString("'1'", $sqlDeclaration);
+        self::assertStringContainsString("'5'", $sqlDeclaration);
+        self::assertStringContainsString("'10'", $sqlDeclaration);
+    }
+
+    public function testIntBackedEnumConvertRoundTrip(): void
+    {
+        $testIntBackedEnumType = new TestIntBackedEnumType();
+
+        $databaseValue = $testIntBackedEnumType->convertToDatabaseValue(TestIntBackedEnum::medium, $this->mysqlPlatform);
+        $phpValue = $testIntBackedEnumType->convertToPHPValue($databaseValue, $this->mysqlPlatform);
+
+        self::assertSame(5, $databaseValue);
+        self::assertSame(TestIntBackedEnum::medium, $phpValue);
     }
 }

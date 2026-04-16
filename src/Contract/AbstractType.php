@@ -8,12 +8,14 @@ declare(strict_types=1);
 
 namespace PrecisionSoft\Doctrine\Type\Contract;
 
-use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 use ReflectionClass;
 
 abstract class AbstractType extends Type
 {
+    /** @var array<class-string, string> */
+    private static array $defaultNameCache = [];
+
     /**
      * Can be used if you have multiple databases with entities that have the
      * same name, to easily have distinct types by using the entity manager
@@ -26,11 +28,7 @@ abstract class AbstractType extends Type
 
     public static function getDefaultName(): string
     {
-        return (static::getDefaultNamePrefix() ?? '') . (new ReflectionClass(static::class))->getShortName();
-    }
-
-    public function requiresSQLCommentHint(AbstractPlatform $platform): bool
-    {
-        return true;
+        return self::$defaultNameCache[static::class]
+            ??= (static::getDefaultNamePrefix() ?? '') . (new ReflectionClass(static::class))->getShortName();
     }
 }

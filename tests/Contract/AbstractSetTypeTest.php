@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace PrecisionSoft\Doctrine\Type\Test\Contract;
 
+use Doctrine\DBAL\Platforms\MariaDBPlatform;
 use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use PrecisionSoft\Doctrine\Type\Contract\AbstractPhpEnumType;
@@ -15,6 +16,8 @@ use PrecisionSoft\Doctrine\Type\Contract\AbstractSetType;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedEnum;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedSetType;
+use PrecisionSoft\Doctrine\Type\Test\Utility\TestIntBackedEnum;
+use PrecisionSoft\Doctrine\Type\Test\Utility\TestIntBackedSetType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnum;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleSetType;
 use PrecisionSoft\Symfony\Phpunit\MockDto;
@@ -137,6 +140,7 @@ class AbstractSetTypeTest extends AbstractTestCase
         $sqlDeclaration = $testBackedSetType->getSQLDeclaration([], new PostgreSQLPlatform());
 
         self::assertStringNotContainsString('SET(', $sqlDeclaration);
+        self::assertStringContainsString('VARCHAR(255)', $sqlDeclaration);
     }
 
     public function testConvertToDatabaseValueWithCommaThrows(): void
@@ -290,6 +294,7 @@ class AbstractSetTypeTest extends AbstractTestCase
         $sqlDeclaration = $testSimpleSetType->getSQLDeclaration([], new PostgreSQLPlatform());
 
         self::assertStringNotContainsString('SET(', $sqlDeclaration);
+        self::assertStringContainsString('VARCHAR(255)', $sqlDeclaration);
     }
 
     public function testConvertToDatabaseValueMixedNullAndDuplicates(): void
@@ -327,14 +332,24 @@ class AbstractSetTypeTest extends AbstractTestCase
         $testBackedSetType->convertToPHPValue(123, $this->mysqlPlatform);
     }
 
-    public function testConvertToPhpValueArrayThrows(): void
+    public function testConvertToPhpValuePassesAlreadyHydratedArrayThrough(): void
+    {
+        $testBackedSetType = new TestBackedSetType();
+        $alreadyHydrated = [TestBackedEnum::first, TestBackedEnum::third];
+
+        $phpValue = $testBackedSetType->convertToPHPValue($alreadyHydrated, $this->mysqlPlatform);
+
+        self::assertSame($alreadyHydrated, $phpValue);
+    }
+
+    public function testConvertToPhpValueObjectThrows(): void
     {
         $testBackedSetType = new TestBackedSetType();
 
         $this->expectException(InvalidTypeValueException::class);
         $this->expectExceptionMessage('expected string for set type');
 
-        $testBackedSetType->convertToPHPValue([], $this->mysqlPlatform);
+        $testBackedSetType->convertToPHPValue(new \stdClass(), $this->mysqlPlatform);
     }
 
     public function testConvertToPhpValueWhitespacePadded(): void
@@ -417,5 +432,49 @@ class AbstractSetTypeTest extends AbstractTestCase
         $this->expectExceptionMessage('does not belong to');
 
         $testBackedSetType->convertToDatabaseValue([TestSimpleEnum::alpha], $this->mysqlPlatform);
+    }
+
+    public function testGetSqlDeclarationMariaDb(): void
+    {
+        $testBackedSetType = new TestBackedSetType();
+        $sqlDeclaration = $testBackedSetType->getSQLDeclaration([], new MariaDBPlatform());
+
+        self::assertStringStartsWith('SET(', $sqlDeclaration);
+        self::assertStringContainsString('first_value', $sqlDeclaration);
+    }
+
+    public function testIntBackedEnumSetConvertRoundTrip(): void
+    {
+        $testIntBackedSetType = new TestIntBackedSetType();
+
+        $databaseValue = $testIntBackedSetType->convertToDatabaseValue(
+            [TestIntBackedEnum::low, TestIntBackedEnum::high],
+            $this->mysqlPlatform,
+        );
+        $phpValue = $testIntBackedSetType->convertToPHPValue($databaseValue, $this->mysqlPlatform);
+
+        self::assertSame('1,10', $databaseValue);
+        self::assertSame([TestIntBackedEnum::low, TestIntBackedEnum::high], $phpValue);
+    }
+
+    public function testIntBackedEnumSetGetSqlDeclarationMysqlQuotesNumericValues(): void
+    {
+        $testIntBackedSetType = new TestIntBackedSetType();
+        $sqlDeclaration = $testIntBackedSetType->getSQLDeclaration([], $this->mysqlPlatform);
+
+        self::assertStringStartsWith('SET(', $sqlDeclaration);
+        self::assertStringContainsString("'1'", $sqlDeclaration);
+        self::assertStringContainsString("'5'", $sqlDeclaration);
+        self::assertStringContainsString("'10'", $sqlDeclaration);
+    }
+
+    public function testConvertToDatabaseValueNullElementInTypedEnumSetThrows(): void
+    {
+        $testBackedSetType = new TestBackedSetType();
+
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('does not allow null elements for typed enum sets');
+
+        $testBackedSetType->convertToDatabaseValue([TestBackedEnum::first, null, TestBackedEnum::third], $this->mysqlPlatform);
     }
 }

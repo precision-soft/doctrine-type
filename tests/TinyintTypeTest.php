@@ -89,6 +89,13 @@ class TinyintTypeTest extends AbstractTestCase
         self::assertSame(100, $databaseValue);
     }
 
+    public function testConvertToDatabaseValuePositiveSignedString(): void
+    {
+        $databaseValue = $this->tinyintType->convertToDatabaseValue('+42', $this->mysqlPlatform);
+
+        self::assertSame(42, $databaseValue);
+    }
+
     public function testConvertToDatabaseValueNegativeString(): void
     {
         $databaseValue = $this->tinyintType->convertToDatabaseValue('-50', $this->mysqlPlatform);
@@ -118,6 +125,16 @@ class TinyintTypeTest extends AbstractTestCase
         $this->expectExceptionMessage('out of TINYINT range');
 
         $this->tinyintType->convertToDatabaseValue('999', $this->mysqlPlatform);
+    }
+
+    public function testConvertToDatabaseValueLargeStringErrorUsesOriginalValue(): void
+    {
+        $oversizedValue = '99999999999999999999';
+
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage(\sprintf('value `%s` is out of TINYINT range', $oversizedValue));
+
+        $this->tinyintType->convertToDatabaseValue($oversizedValue, $this->mysqlPlatform);
     }
 
     public function testConvertToDatabaseValueInvalidTypeThrows(): void
@@ -350,5 +367,35 @@ class TinyintTypeTest extends AbstractTestCase
         $sqlDeclaration = $this->tinyintType->getSQLDeclaration(['unsigned' => false], $this->mysqlPlatform);
 
         self::assertSame('TINYINT', $sqlDeclaration);
+    }
+
+    public function testConvertToPhpValueStringBoundaryMinSigned(): void
+    {
+        $phpValue = $this->tinyintType->convertToPHPValue('-128', $this->mysqlPlatform);
+
+        self::assertSame(-128, $phpValue);
+    }
+
+    public function testConvertToPhpValueStringBoundaryMinSignedMinus1Throws(): void
+    {
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('out of TINYINT range');
+
+        $this->tinyintType->convertToPHPValue('-129', $this->mysqlPlatform);
+    }
+
+    public function testConvertToPhpValueStringBoundaryMaxUnsigned(): void
+    {
+        $phpValue = $this->tinyintType->convertToPHPValue('255', $this->mysqlPlatform);
+
+        self::assertSame(255, $phpValue);
+    }
+
+    public function testConvertToPhpValueStringBoundaryMaxUnsignedPlus1Throws(): void
+    {
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('out of TINYINT range');
+
+        $this->tinyintType->convertToPHPValue('256', $this->mysqlPlatform);
     }
 }

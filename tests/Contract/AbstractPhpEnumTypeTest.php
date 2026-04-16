@@ -115,6 +115,26 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $testSimpleEnumType->convertToPHPValue('nonexistent', $this->mysqlPlatform);
     }
 
+    public function testSimpleEnumConvertToPhpValueClassConstantThrows(): void
+    {
+        $testSimpleEnumType = new TestSimpleEnumType();
+
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('invalid enum value `NOT_A_CASE`');
+
+        $testSimpleEnumType->convertToPHPValue('NOT_A_CASE', $this->mysqlPlatform);
+    }
+
+    public function testSimpleEnumConvertToPhpValueNonStringThrows(): void
+    {
+        $testSimpleEnumType = new TestSimpleEnumType();
+
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('expected string enum case name');
+
+        $testSimpleEnumType->convertToPHPValue(42, $this->mysqlPlatform);
+    }
+
     public function testGetEnumValues(): void
     {
         $testBackedEnumType = new TestBackedEnumType();
@@ -272,5 +292,41 @@ class AbstractPhpEnumTypeTest extends AbstractTestCase
         $this->expectException(InvalidTypeValueException::class);
 
         $testIntBackedEnumType->convertToPHPValue('999', $this->mysqlPlatform);
+    }
+
+    public function testBackedEnumConvertToPhpValuePassesAlreadyHydratedEnumThrough(): void
+    {
+        $testBackedEnumType = new TestBackedEnumType();
+        $phpValue = $testBackedEnumType->convertToPHPValue(TestBackedEnum::second, $this->mysqlPlatform);
+
+        self::assertSame(TestBackedEnum::second, $phpValue);
+    }
+
+    public function testSimpleEnumConvertToPhpValuePassesAlreadyHydratedEnumThrough(): void
+    {
+        $testSimpleEnumType = new TestSimpleEnumType();
+        $phpValue = $testSimpleEnumType->convertToPHPValue(TestSimpleEnum::beta, $this->mysqlPlatform);
+
+        self::assertSame(TestSimpleEnum::beta, $phpValue);
+    }
+
+    public function testIntBackedEnumConvertToPhpValueNonIntStringThrows(): void
+    {
+        $testIntBackedEnumType = new TestIntBackedEnumType();
+
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('expected int or integer-formatted string');
+
+        $testIntBackedEnumType->convertToPHPValue('not_a_number', $this->mysqlPlatform);
+    }
+
+    public function testStringBackedEnumConvertToPhpValueIntThrows(): void
+    {
+        $testBackedEnumType = new TestBackedEnumType();
+
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('expected string for type');
+
+        $testBackedEnumType->convertToPHPValue(42, $this->mysqlPlatform);
     }
 }

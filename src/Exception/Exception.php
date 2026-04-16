@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace PrecisionSoft\Doctrine\Type\Exception;
 
+use Doctrine\DBAL\Exception as DoctrineDbalException;
 use Exception as BaseException;
 
-class Exception extends BaseException {}
+class Exception extends BaseException implements DoctrineDbalException {}
