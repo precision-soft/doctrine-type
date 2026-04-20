@@ -488,4 +488,49 @@ final class AbstractSetTypeTest extends AbstractTestCase
 
         $testBackedSetType->convertToDatabaseValue([TestBackedEnum::first, null, TestBackedEnum::third], $this->mysqlPlatform);
     }
+
+    public function testConvertToPhpValueHydratedArrayWithWrongEnumClassThrows(): void
+    {
+        $testBackedSetType = new TestBackedSetType();
+
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('does not belong to');
+
+        $testBackedSetType->convertToPHPValue([TestBackedEnum::first, TestSimpleEnum::alpha], $this->mysqlPlatform);
+    }
+
+    public function testConvertToPhpValueHydratedArrayWithNonEnumElementThrows(): void
+    {
+        $testBackedSetType = new TestBackedSetType();
+
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('expected enum case of');
+
+        $testBackedSetType->convertToPHPValue([TestBackedEnum::first, 'raw-string'], $this->mysqlPlatform);
+    }
+
+    public function testConvertToPhpValueHydratedArrayUntypedSetPassesThrough(): void
+    {
+        $anonymousSetType = new class extends AbstractSetType {
+            /** @return array<int, mixed> */
+            public function getValues(): array
+            {
+                return ['a', 'b'];
+            }
+
+            protected function convertValueToDatabase(mixed $value): mixed
+            {
+                return $value;
+            }
+
+            protected function convertValueToPhp(mixed $value): mixed
+            {
+                return $value;
+            }
+        };
+
+        $phpValue = $anonymousSetType->convertToPHPValue(['a', 'b'], $this->mysqlPlatform);
+
+        static::assertSame(['a', 'b'], $phpValue);
+    }
 }

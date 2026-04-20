@@ -26,6 +26,9 @@ abstract class AbstractPhpEnumType extends AbstractType
     /** @var array<class-string, ?string> */
     protected static array $backingTypeCache = [];
 
+    /** @var array<string, string> */
+    protected static array $sqlDeclarationCache = [];
+
     /**
      * @info not thread-safe — calling this from multiple requests or async contexts can race with concurrent reads against `getEnumType()` / `getEnumByValue()`. Intended for single-threaded test teardown or CLI warm-up; do not invoke from request handlers
      */
@@ -33,6 +36,7 @@ abstract class AbstractPhpEnumType extends AbstractType
     {
         self::$enumTypeCache = [];
         self::$backingTypeCache = [];
+        self::$sqlDeclarationCache = [];
     }
 
     /**
@@ -68,6 +72,13 @@ abstract class AbstractPhpEnumType extends AbstractType
      */
     protected function buildSqlDeclaration(string $sqlKeyword, array $column, AbstractPlatform $platform): string
     {
+        /** @info cache key covers everything that can change the emitted SQL: concrete Type class (enum cases), keyword (ENUM vs SET), platform class (MySQL fast-path vs fallback), and the column array (non-MySQL `getStringTypeDeclarationSQL` reads `length`/`name`/etc.) */
+        $cacheKey = static::class . '|' . $sqlKeyword . '|' . $platform::class . '|' . \serialize($column);
+
+        if (true === isset(self::$sqlDeclarationCache[$cacheKey])) {
+            return self::$sqlDeclarationCache[$cacheKey];
+        }
+
         $quotedValues = [];
 
         foreach ($this->getValues() as $enumCase) {
@@ -77,14 +88,14 @@ abstract class AbstractPhpEnumType extends AbstractType
         }
 
         if (true === $platform instanceof AbstractMySQLPlatform) {
-            return $sqlKeyword . '(' . \implode(',', $quotedValues) . ')';
+            return self::$sqlDeclarationCache[$cacheKey] = $sqlKeyword . '(' . \implode(',', $quotedValues) . ')';
         }
 
         /** @info non-MySQL platforms need `length` and `name` defaults, otherwise `getStringTypeDeclarationSQL` may fail or produce invalid SQL */
         $column['length'] ??= 255;
         $column['name'] ??= '';
 
-        return $platform->getStringTypeDeclarationSQL($column);
+        return self::$sqlDeclarationCache[$cacheKey] = $platform->getStringTypeDeclarationSQL($column);
     }
 
     /**

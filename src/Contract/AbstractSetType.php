@@ -106,8 +106,35 @@ abstract class AbstractSetType extends AbstractPhpEnumType
             return null;
         }
 
-        /** @info pass through already-hydrated arrays (e.g. tests that round-trip PHP values, or virtual/computed columns that bypass raw DB serialization) */
+        /** @info pass through already-hydrated arrays (e.g. tests that round-trip PHP values, or virtual/computed columns that bypass raw DB serialization); symmetric to convertToDatabaseValue: each element must match the configured enum class, otherwise a mismatched/raw element sneaks through unchecked */
         if (true === \is_array($value)) {
+            $allowedEnumClass = $this->getEnumClass();
+
+            if (null !== $allowedEnumClass) {
+                foreach ($value as $element) {
+                    if (false === $element instanceof UnitEnum) {
+                        throw new InvalidTypeValueException(
+                            \sprintf(
+                                'expected enum case of `%s` for type `%s`',
+                                $allowedEnumClass,
+                                static::getDefaultName(),
+                            ),
+                        );
+                    }
+
+                    if (false === $element instanceof $allowedEnumClass) {
+                        throw new InvalidTypeValueException(
+                            \sprintf(
+                                'enum case `%s` does not belong to `%s` for type `%s`',
+                                $element::class,
+                                $allowedEnumClass,
+                                static::getDefaultName(),
+                            ),
+                        );
+                    }
+                }
+            }
+
             return $value;
         }
 

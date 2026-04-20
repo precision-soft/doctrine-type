@@ -5,12 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v3.4.0] - 2026-04-16
+## [Unreleased]
+
+## [v3.4.1] - 2026-04-20 - Symmetric convertToPhpValue enum-class guard and cache SQL declarations
 
 ### Fixed
 
-- `AbstractEnumType::convertToDatabaseValue()` — validates that the passed enum belongs to the configured `getEnumClass()`, throwing `InvalidTypeValueException` when a mismatched enum is passed (previously any `UnitEnum`/`BackedEnum` was silently accepted regardless of class)
-- `TinyintType::getSQLDeclaration()` — throws base `Exception` instead of `InvalidTypeValueException` for unsupported platforms; the unsupported-platform error is a configuration issue, not a value error
+- `AbstractEnumType::convertToPHPValue()` — now rejects pre-hydrated `UnitEnum` values that do not belong to the configured `getEnumClass()`, throwing `InvalidTypeValueException` with the same message shape as `convertToDatabaseValue()`. Completes the symmetric guard introduced in v3.4.0 — previously a mismatched enum from another class could silently pass through the "already hydrated" branch (round-trip tests and virtual/computed columns)
+- `AbstractSetType::convertToPHPValue()` — now validates each element of a pre-hydrated array against the configured `getEnumClass()` when one is set; throws `InvalidTypeValueException` for non-enum elements (`expected enum case of ...`) and for enum cases from foreign classes (`does not belong to ...`). Untyped sets (no `getEnumClass()`) continue to pass arrays through unchanged
+
+### Changed
+
+- `AbstractPhpEnumType::buildSqlDeclaration()` — result is now cached so repeated `getSQLDeclaration()` calls during schema operations no longer re-walk the enum cases or re-resolve the platform branch. Cache key combines `static::class`, the SQL keyword (`ENUM` vs `SET`), the platform class, and `serialize($column)` so different column shapes (e.g. `length=64` vs `length=255` on non-MySQL) do not share a slot
+- `phpstan.neon` — removed the `bootstrapFiles` directive that pointed at the `symfony/phpunit-bridge` download under `vendor/bin/.phpunit/`. PHPStan now resolves all classes through the project's own Composer autoload, so the configuration no longer depends on an external tool's on-disk layout (DT-09)
+
+### Added
+
+- `AbstractPhpEnumType::$sqlDeclarationCache` — `protected static array<string, string>` holding cached SQL declarations; cleared alongside the existing caches by `clearCache()`
+- `tests/Contract/AbstractEnumTypeTest.php` — `testConvertToPhpValueWrongEnumClassThrows`, `testConvertToPhpValuePassesMatchingEnumThrough`
+- `tests/Contract/AbstractPhpEnumTypeTest.php` — `testBuildSqlDeclarationCacheReturnsIdenticalResult`, `testBuildSqlDeclarationCacheDistinguishesColumnArguments` (verifies the cache key includes the column array so different `length` values produce different SQL)
+- `tests/Contract/AbstractSetTypeTest.php` — `testConvertToPhpValueHydratedArrayWithWrongEnumClassThrows`, `testConvertToPhpValueHydratedArrayWithNonEnumElementThrows`, `testConvertToPhpValueHydratedArrayUntypedSetPassesThrough`
+
+## [v3.4.0] - 2026-04-16
+
+### Breaking Changes
+
+- `AbstractEnumType::convertToDatabaseValue()` — validates that the passed enum belongs to the configured `getEnumClass()`, throwing `InvalidTypeValueException` when a mismatched enum is passed (previously any `UnitEnum`/`BackedEnum` was silently accepted regardless of class); callers that relied on cross-class enum values being silently accepted will now receive an exception
+- `TinyintType::getSQLDeclaration()` — throws base `Exception` instead of `InvalidTypeValueException` for unsupported platforms; the unsupported-platform error is a configuration issue, not a value error; callers catching `InvalidTypeValueException` specifically will no longer catch this case
 
 ### Changed
 
@@ -81,7 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `TinyintType` — extracted out-of-range error into protected `throwOutOfRangeException(int $value): never` helper for reuse and subclass overrides
 
-## [v3.2.0] - 2026-04-12
+## [v3.2.0] - 2026-04-13
 
 ### Added
 
@@ -106,7 +127,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `AbstractSetType::convertToDatabaseValue()` — refactored null guard to early return for clarity
 
-## [v3.1.1] - 2026-04-07
+## [v3.1.1] - 2026-04-09
 
 ### Fixed
 
@@ -285,7 +306,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `TinyintType` for MySQL `TINYINT` columns
 - Project-specific exception hierarchy
 
-[Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.4.0...HEAD
+[Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.4.1...HEAD
+
+[v3.4.1]: https://github.com/precision-soft/doctrine-type/compare/v3.4.0...v3.4.1
 
 [v3.4.0]: https://github.com/precision-soft/doctrine-type/compare/v3.3.0...v3.4.0
 

@@ -330,4 +330,34 @@ final class AbstractPhpEnumTypeTest extends AbstractTestCase
 
         $testBackedEnumType->convertToPHPValue(42, $this->mysqlPlatform);
     }
+
+    public function testBuildSqlDeclarationCacheReturnsIdenticalResult(): void
+    {
+        $testBackedEnumType = new TestBackedEnumType();
+
+        $firstCall = $testBackedEnumType->getSQLDeclaration([], $this->mysqlPlatform);
+        $secondCall = $testBackedEnumType->getSQLDeclaration([], $this->mysqlPlatform);
+
+        static::assertSame($firstCall, $secondCall);
+    }
+
+    public function testBuildSqlDeclarationCacheDistinguishesColumnArguments(): void
+    {
+        $anonymousEnumType = new class extends AbstractEnumType {
+            public function getEnumClass(): string
+            {
+                return TestBackedEnum::class;
+            }
+        };
+
+        $postgresPlatform = new \Doctrine\DBAL\Platforms\PostgreSQLPlatform();
+
+        $shortLength = $anonymousEnumType->getSQLDeclaration(['length' => 64], $postgresPlatform);
+        $longLength = $anonymousEnumType->getSQLDeclaration(['length' => 255], $postgresPlatform);
+
+        /** @info the cache key includes serialize($column); different length values must NOT share a cache slot */
+        static::assertNotSame($shortLength, $longLength);
+        static::assertStringContainsString('64', $shortLength);
+        static::assertStringContainsString('255', $longLength);
+    }
 }

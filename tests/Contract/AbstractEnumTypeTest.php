@@ -187,4 +187,23 @@ final class AbstractEnumTypeTest extends AbstractTestCase
         static::assertSame(5, $databaseValue);
         static::assertSame(TestIntBackedEnum::medium, $phpValue);
     }
+
+    public function testConvertToPhpValueWrongEnumClassThrows(): void
+    {
+        $testBackedEnumType = new TestBackedEnumType();
+
+        $this->expectException(InvalidTypeValueException::class);
+        $this->expectExceptionMessage('does not belong to');
+
+        $testBackedEnumType->convertToPHPValue(TestSimpleEnum::alpha, $this->mysqlPlatform);
+    }
+
+    public function testConvertToPhpValuePassesMatchingEnumThrough(): void
+    {
+        $testBackedEnumType = new TestBackedEnumType();
+
+        $phpValue = $testBackedEnumType->convertToPHPValue(TestBackedEnum::second, $this->mysqlPlatform);
+
+        static::assertSame(TestBackedEnum::second, $phpValue);
+    }
 }

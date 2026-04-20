@@ -965,11 +965,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.1.48",
+            "version": "2.1.50",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/231397213efb7c0a066ee024b5c3c87f2d3adfa0",
-                "reference": "231397213efb7c0a066ee024b5c3c87f2d3adfa0",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/d452086fb4cf648c6b2d8cf3b639351f79e4f3e2",
+                "reference": "d452086fb4cf648c6b2d8cf3b639351f79e4f3e2",
                 "shasum": ""
             },
             "require": {
@@ -1014,20 +1014,20 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-04-15T20:24:19+00:00"
+            "time": "2026-04-17T13:10:32+00:00"
         },
         {
             "name": "precision-soft/symfony-phpunit",
-            "version": "v3.3.1",
+            "version": "v3.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/precision-soft/symfony-phpunit.git",
-                "reference": "6d53c8ef9c394b40b4acc0af8a38e0eef4c013e0"
+                "reference": "ae06e0d1cbd94591c43fcbedabf48138a7104d51"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/precision-soft/symfony-phpunit/zipball/6d53c8ef9c394b40b4acc0af8a38e0eef4c013e0",
-                "reference": "6d53c8ef9c394b40b4acc0af8a38e0eef4c013e0",
+                "url": "https://api.github.com/repos/precision-soft/symfony-phpunit/zipball/ae06e0d1cbd94591c43fcbedabf48138a7104d51",
+                "reference": "ae06e0d1cbd94591c43fcbedabf48138a7104d51",
                 "shasum": ""
             },
             "require": {
@@ -1074,9 +1074,9 @@
             ],
             "support": {
                 "issues": "https://github.com/precision-soft/symfony-phpunit/issues",
-                "source": "https://github.com/precision-soft/symfony-phpunit/tree/v3.3.1"
+                "source": "https://github.com/precision-soft/symfony-phpunit/tree/v3.4.0"
             },
-            "time": "2026-04-16T07:14:07+00:00"
+            "time": "2026-04-20T06:05:47+00:00"
         },
         {
             "name": "psr/container",
