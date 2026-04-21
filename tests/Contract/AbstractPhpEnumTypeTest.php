@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace PrecisionSoft\Doctrine\Type\Test\Contract;
 
 use Doctrine\DBAL\Platforms\MySQLPlatform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use PrecisionSoft\Doctrine\Type\Contract\AbstractEnumType;
 use PrecisionSoft\Doctrine\Type\Contract\AbstractPhpEnumType;
 use PrecisionSoft\Doctrine\Type\Exception\Exception;
@@ -350,7 +351,7 @@ final class AbstractPhpEnumTypeTest extends AbstractTestCase
             }
         };
 
-        $postgresPlatform = new \Doctrine\DBAL\Platforms\PostgreSQLPlatform();
+        $postgresPlatform = new PostgreSQLPlatform();
 
         $shortLength = $anonymousEnumType->getSQLDeclaration(['length' => 64], $postgresPlatform);
         $longLength = $anonymousEnumType->getSQLDeclaration(['length' => 255], $postgresPlatform);

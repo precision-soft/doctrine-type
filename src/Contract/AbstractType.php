@@ -14,7 +14,7 @@ use ReflectionClass;
 abstract class AbstractType extends Type
 {
     /** @var array<class-string, string> */
-    private static array $defaultNameCache = [];
+    protected static array $defaultNameCache = [];
 
     /**
      * Can be used if you have multiple databases with entities that have the

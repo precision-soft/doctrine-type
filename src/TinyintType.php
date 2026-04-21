@@ -21,7 +21,7 @@ class TinyintType extends AbstractType
 
     public static function getDefaultName(): string
     {
-        return self::TINYINT;
+        return static::TINYINT;
     }
 
     /**

@@ -351,7 +351,7 @@ final class AbstractSetTypeTest extends AbstractTestCase
         $this->expectException(InvalidTypeValueException::class);
         $this->expectExceptionMessage('expected string for set type');
 
-        $testBackedSetType->convertToPHPValue(new \stdClass(), $this->mysqlPlatform);
+        $testBackedSetType->convertToPHPValue(new stdClass(), $this->mysqlPlatform);
     }
 
     public function testConvertToPhpValueWhitespacePadded(): void
