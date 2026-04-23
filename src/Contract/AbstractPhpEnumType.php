@@ -34,9 +34,9 @@ abstract class AbstractPhpEnumType extends AbstractType
      */
     public static function clearCache(): void
     {
-        self::$enumTypeCache = [];
-        self::$backingTypeCache = [];
-        self::$sqlDeclarationCache = [];
+        static::$enumTypeCache = [];
+        static::$backingTypeCache = [];
+        static::$sqlDeclarationCache = [];
     }
 
     /**
@@ -75,8 +75,8 @@ abstract class AbstractPhpEnumType extends AbstractType
         /** @info cache key covers everything that can change the emitted SQL: concrete Type class (enum cases), keyword (ENUM vs SET), platform class (MySQL fast-path vs fallback), and the column array (non-MySQL `getStringTypeDeclarationSQL` reads `length`/`name`/etc.) */
         $cacheKey = static::class . '|' . $sqlKeyword . '|' . $platform::class . '|' . \serialize($column);
 
-        if (true === isset(self::$sqlDeclarationCache[$cacheKey])) {
-            return self::$sqlDeclarationCache[$cacheKey];
+        if (true === isset(static::$sqlDeclarationCache[$cacheKey])) {
+            return static::$sqlDeclarationCache[$cacheKey];
         }
 
         $quotedValues = [];
@@ -88,14 +88,14 @@ abstract class AbstractPhpEnumType extends AbstractType
         }
 
         if (true === $platform instanceof AbstractMySQLPlatform) {
-            return self::$sqlDeclarationCache[$cacheKey] = $sqlKeyword . '(' . \implode(',', $quotedValues) . ')';
+            return static::$sqlDeclarationCache[$cacheKey] = $sqlKeyword . '(' . \implode(',', $quotedValues) . ')';
         }
 
         /** @info non-MySQL platforms need `length` and `name` defaults, otherwise `getStringTypeDeclarationSQL` may fail or produce invalid SQL */
         $column['length'] ??= 255;
         $column['name'] ??= '';
 
-        return self::$sqlDeclarationCache[$cacheKey] = $platform->getStringTypeDeclarationSQL($column);
+        return static::$sqlDeclarationCache[$cacheKey] = $platform->getStringTypeDeclarationSQL($column);
     }
 
     /**
@@ -157,14 +157,14 @@ abstract class AbstractPhpEnumType extends AbstractType
     {
         $calledClassName = static::class;
 
-        if (true === isset(self::$enumTypeCache[$calledClassName])) {
-            return self::$enumTypeCache[$calledClassName];
+        if (true === isset(static::$enumTypeCache[$calledClassName])) {
+            return static::$enumTypeCache[$calledClassName];
         }
 
         $enumClassName = $this->getEnumClass();
 
         if (null === $enumClassName) {
-            return self::$enumTypeCache[$calledClassName] = EnumType::notEnum;
+            return static::$enumTypeCache[$calledClassName] = EnumType::notEnum;
         }
 
         if (false === \enum_exists($enumClassName)) {
@@ -177,7 +177,7 @@ abstract class AbstractPhpEnumType extends AbstractType
             );
         }
 
-        return self::$enumTypeCache[$calledClassName] = true === \is_a($enumClassName, BackedEnum::class, true)
+        return static::$enumTypeCache[$calledClassName] = true === \is_a($enumClassName, BackedEnum::class, true)
             ? EnumType::backed
             : EnumType::simple;
     }
@@ -236,13 +236,13 @@ abstract class AbstractPhpEnumType extends AbstractType
         /** @var class-string<BackedEnum> $enumClassName */
         $enumClassName = $this->getEnumClass();
 
-        if (false === isset(self::$backingTypeCache[$enumClassName])) {
+        if (false === isset(static::$backingTypeCache[$enumClassName])) {
             $reflectionEnum = new ReflectionEnum($enumClassName);
             $backingType = $reflectionEnum->getBackingType();
-            self::$backingTypeCache[$enumClassName] = null !== $backingType ? $backingType->getName() : null;
+            static::$backingTypeCache[$enumClassName] = null !== $backingType ? $backingType->getName() : null;
         }
 
-        $backingType = self::$backingTypeCache[$enumClassName];
+        $backingType = static::$backingTypeCache[$enumClassName];
 
         if ('int' === $backingType) {
             if (true === \is_int($backedEnumValue)) {

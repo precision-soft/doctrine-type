@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.4.4] - 2026-04-23 - Extend Late Static Binding to AbstractPhpEnumType Cache Properties
+
+### Fixed
+
+- `AbstractPhpEnumType::clearCache()`, `buildSqlDeclaration()`, `getEnumType()`, and `getEnumByValue()` — changed `self::$enumTypeCache`, `self::$backingTypeCache`, and `self::$sqlDeclarationCache` to `static::` on all 14 call sites; the v3.4.3 pass fixed `AbstractType` but missed the three `protected static` caches in `AbstractPhpEnumType`
+
+### Changed
+
+- `composer.json` — removed the `version` field; version is now managed exclusively via GitHub release tags
+
 ## [v3.4.3] - 2026-04-23 - AbstractType late static binding on name cache
 
 ### Fixed
@@ -370,7 +380,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `PrecisionSoft\Doctrine\Type\Exception\Exception` and `InvalidTypeValueException` — project-specific exception hierarchy rooted at a base exception
 - Docker dev container (`dev/docker/`), git pre-commit hook, php-cs-fixer / PHP_CodeSniffer / PHPUnit scaffolding
 
-[Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.4.3...HEAD
+[Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.4.4...HEAD
+
+[v3.4.4]: https://github.com/precision-soft/doctrine-type/compare/v3.4.3...v3.4.4
 
 [v3.4.3]: https://github.com/precision-soft/doctrine-type/compare/v3.4.2...v3.4.3
 
