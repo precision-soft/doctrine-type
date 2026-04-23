@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.4.3] - 2026-04-23 - AbstractType late static binding on name cache
+
+### Fixed
+
+- `AbstractType::getDefaultName()` — cache lookup changed from `self::$defaultNameCache` to `static::$defaultNameCache`; subclasses that redeclare the protected static property now correctly isolate their own cache slot rather than writing into the parent's shared array
+
 ## [v3.4.2] - 2026-04-21 - CHANGELOG standardization and cache visibility alignment
 
 ### Changed
@@ -364,7 +370,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `PrecisionSoft\Doctrine\Type\Exception\Exception` and `InvalidTypeValueException` — project-specific exception hierarchy rooted at a base exception
 - Docker dev container (`dev/docker/`), git pre-commit hook, php-cs-fixer / PHP_CodeSniffer / PHPUnit scaffolding
 
-[Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.4.2...HEAD
+[Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.4.3...HEAD
+
+[v3.4.3]: https://github.com/precision-soft/doctrine-type/compare/v3.4.2...v3.4.3
 
 [v3.4.2]: https://github.com/precision-soft/doctrine-type/compare/v3.4.1...v3.4.2
 

@@ -8,6 +8,7 @@
     ],
     "homepage": "https://github.com/precision-soft/doctrine-type",
     "license": "MIT",
+    "version": "v3.4.3",
     "authors": [
         {
             "name": "Adrian Jeledintan",

@@ -28,7 +28,7 @@ abstract class AbstractType extends Type
 
     public static function getDefaultName(): string
     {
-        return self::$defaultNameCache[static::class]
+        return static::$defaultNameCache[static::class]
             ??= (static::getDefaultNamePrefix() ?? '') . (new ReflectionClass(static::class))->getShortName();
     }
 }
