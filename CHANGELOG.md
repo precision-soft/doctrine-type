@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.4.5] - 2026-06-17 - Deterministic SQL Declaration Cache Key
+
+### Changed
+
+- `AbstractPhpEnumType::buildSqlDeclaration()` — the column metadata is now key-sorted before being serialized into the SQL-declaration cache key, so logically identical column arrays supplied in a different key order resolve to the same cache entry instead of missing the cache; the emitted SQL is unchanged
+
+### Added
+
+- `composer.json` — added `test`, `phpstan`, `cs-check`, `cs-fix` and an aggregate `check` convenience script wrapping `simple-phpunit`, `phpstan`, and `php-cs-fixer`
+
 ## [v3.4.4] - 2026-04-23 - Extend Late Static Binding to AbstractPhpEnumType Cache Properties
 
 ### Fixed
@@ -380,7 +390,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `PrecisionSoft\Doctrine\Type\Exception\Exception` and `InvalidTypeValueException` — project-specific exception hierarchy rooted at a base exception
 - Docker dev container (`dev/docker/`), git pre-commit hook, php-cs-fixer / PHP_CodeSniffer / PHPUnit scaffolding
 
-[Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.4.4...HEAD
+[Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.4.5...HEAD
+
+[v3.4.5]: https://github.com/precision-soft/doctrine-type/compare/v3.4.4...v3.4.5
 
 [v3.4.4]: https://github.com/precision-soft/doctrine-type/compare/v3.4.3...v3.4.4
 

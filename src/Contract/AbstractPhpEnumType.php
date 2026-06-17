@@ -72,8 +72,10 @@ abstract class AbstractPhpEnumType extends AbstractType
      */
     protected function buildSqlDeclaration(string $sqlKeyword, array $column, AbstractPlatform $platform): string
     {
-        /** @info cache key covers everything that can change the emitted SQL: concrete Type class (enum cases), keyword (ENUM vs SET), platform class (MySQL fast-path vs fallback), and the column array (non-MySQL `getStringTypeDeclarationSQL` reads `length`/`name`/etc.) */
-        $cacheKey = static::class . '|' . $sqlKeyword . '|' . $platform::class . '|' . \serialize($column);
+        /** @info cache key covers everything that can change the emitted SQL: concrete Type class (enum cases), keyword (ENUM vs SET), platform class (MySQL fast-path vs fallback), and the column array (non-MySQL `getStringTypeDeclarationSQL` reads `length`/`name`/etc.). The column copy is key-sorted so logically identical metadata in a different key order resolves to the same cache entry */
+        $normalizedColumn = $column;
+        \ksort($normalizedColumn);
+        $cacheKey = static::class . '|' . $sqlKeyword . '|' . $platform::class . '|' . \serialize($normalizedColumn);
 
         if (true === isset(static::$sqlDeclarationCache[$cacheKey])) {
             return static::$sqlDeclarationCache[$cacheKey];
