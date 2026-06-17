@@ -18,7 +18,7 @@ class DateTimeType extends DoctrineDateTimeType
     {
         $sqlDeclaration = parent::getSQLDeclaration($column, $platform);
 
-        /** @info `column['update']` is a boolean flag on the column mapping enabling `ON UPDATE CURRENT_TIMESTAMP`; we accept any truthy value to tolerate annotations like `options={"update": 1}`, but schema designers should always pass a real boolean */
+        /** @info `column['update']` is a boolean flag on the column mapping enabling `ON UPDATE CURRENT_TIMESTAMP`; only a strict boolean `true` enables it, so schema designers must pass a real boolean (`options={"update": true}`) — a truthy `1` is intentionally not accepted */
         if (
             true === $platform instanceof AbstractMySQLPlatform
             && true === ($column['update'] ?? false)
