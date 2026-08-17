@@ -29,13 +29,39 @@ The development shell profile ([`.dev/docker/.profile`](./.dev/docker/.profile))
 - `pstan` — run `phpstan` (level 8 static analysis)
 - `full` — run `composer install`, then `pfix`, `punit`, and `pstan` in sequence
 
-Run the full suite before opening a pull request:
+The gate itself lives in one place — [`.dev/validate/all.sh`](./.dev/validate/all.sh) — so a section is added once and every caller inherits it. Run it from the host, before opening a pull request:
 
 ```bash
-full
+.dev/validate/all.sh                  # cs-check, phpstan, test
+.dev/validate/all.sh --audit          # also audit the locked dependencies (needs the network)
+.dev/validate/all.sh --integration    # also run the integration suite (starts mysql and mariadb)
+.dev/validate/all.sh --mutation       # also run mutation testing (slow: the suite runs once per mutant)
 ```
 
-The git `pre-commit` hook ([`.dev/git-hooks/pre-commit`](./.dev/git-hooks/pre-commit)) enforces the same checks on staged PHP files: `php-cs-fixer`, `php -l`, `phpstan`, and `simple-phpunit`. A commit is rejected if any of them fail.
+The three default sections are what `composer check` runs, so they stay fast and offline. The three flagged sections are deliberately outside it: `--audit` is the only section needing the network, `--integration` needs a running database, and `--mutation` costs a full suite run per mutant. The composer script is named `deps-audit` rather than `audit`, because a script named `audit` collides with Composer's own command and is skipped in silence.
+
+The git `pre-commit` hook ([`.dev/git-hooks/pre-commit`](./.dev/git-hooks/pre-commit)) is a deliberately thin caller of the same script (`--staged`, which does nothing unless the index carries a PHP change). It checks and never fixes — run `composer cs-fix` yourself. It adds one guard CI cannot: it reads the index and rejects a force-staged `.dev-data/` path or `.dev/docker/.env.local`, both of which are gitignored and, by the time a push reaches CI, would already be in the history.
+
+### Development toolchain
+
+The dev image ([`.dev/docker/Dockerfile`](./.dev/docker/Dockerfile)) pins the two tools the gate needs but `composer.lock` must not describe:
+
+- **pcov** is built from a pinned tarball rather than `pecl install`, so a rebuild cannot move the coverage driver under a mutation baseline. It is installed but disabled ([`.dev/docker/php.dev.ini`](./.dev/docker/php.dev.ini)) and enabled per run: `php -d pcov.enabled=1 vendor/bin/simple-phpunit --coverage-text`. The `composer mutation` script passes the same flag for the initial test run.
+- **infection** is a pinned phar, not a composer dev dependency: `composer.lock` is one converged toolchain shared across the portfolio, and a tool outside `composer check` must not move it. The pin is the last release supporting PHP 8.2, this package's own floor.
+
+`php.dev.ini` is copied to `conf.d/zz-dev.ini`, so it sorts after every `docker-php-ext-*.ini` and has the last word. It lifts `memory_limit`, which `php.ini-production` ships at 128M — the `--memory-limit` flag stays in the composer scripts anyway, because CI runs them on a runner that never sees this overlay. `opcache.enable_cli = 0` is an explicit no-op: the CLI SAPI never loads opcache in these images, so stale code in the container is an inode problem in the bind mount, and `./dc restart dev` is the fix. The `.profile` copy is the last layer in the image, because every layer below a `COPY` is invalidated with it and `.profile` is the file that keeps changing.
+
+The `db` profile is started only on request (`./dc --profile db up -d`). `DATABASE_URL_MYSQL` and `DATABASE_URL_MARIADB` are set on the `dev` service whether or not it is up, so a test connects and skips rather than branching on configuration. The database services publish no ports and store on `tmpfs`, so their credentials reach nothing and no state survives a restart.
+
+Mutation thresholds live in [`infection.json5`](./infection.json5) (`minMsi`, `minCoveredMsi`). They are the measured baseline rounded down: raise them when the score improves, and never lower one to make a run pass.
+
+### Continuous integration
+
+[`.github/workflows/ci.yml`](./.github/workflows/ci.yml) cannot call `.dev/validate/all.sh` — the script needs Docker and a compose project — so it runs the same composer scripts natively across a PHP version matrix instead. Four jobs: `static` (out of the matrix, since `cs-check` reads the same bytes on every interpreter), `test` (`phpstan` and the suite on 8.2, 8.3 and 8.4, because phpstan's inference follows the interpreter), `integration` (against real MySQL 8.4 and MariaDB 11.4 services) and `audit`.
+
+The integration job passes `--fail-on-skipped`, which is deliberately not in `phpunit.xml.dist`: locally a missing database is a skip, so `composer check` stays offline, while in CI a broken `DATABASE_URL` must fail instead of printing a screen of green skips.
+
+Every job installs the locked dependencies and never resolves its own, so the analysers certify the code against the versions this repository ships. The `vendor/bin/.phpunit` cache step comes *after* the install, because `simple-phpunit` builds a tree `composer.lock` does not describe and composer owns `vendor/`, so it would clean a pre-restored directory back out.
 
 ## Development workflow
 
@@ -102,6 +128,10 @@ Getters/setters do not form their own block: they follow the declaration order o
 ### Comments and messages
 
 - All comments in **English**, and minimal — only when they add real architectural or contractual value.
+- **The default is no comment.** A comment is justified in two cases: the code is genuinely hard to follow, or something looks wrong but is intentional and a reader would otherwise "fix" it. Nothing else — no history (git has it), no restating the line below, no narrating how the code came to be.
+- When a comment is warranted, write **one short line**, never a wrapped block. If it wants to be multi-line, a better name or an extracted function is the answer. In a test, the test's **name** is the explanation.
+- The long *why* belongs in the documentation — this file, [`README.md`](./README.md) or [`CHANGELOG.md`](./CHANGELOG.md) — not in a comment.
+- PHP comments use `/** ... */` for docblocks and `/* ... */` inside a body; never `//`. Annotations (`@param`, `@return`, `@var`, `@throws`, `@internal`, `@phpstan-*`) are type and contract carriers and always stay — a qualification of an annotation belongs on the annotation, not in prose above it.
 - No `@todo` markers in code; track work in the issue tracker instead.
 - Error messages must be **fully lowercase**.
 

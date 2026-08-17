@@ -152,7 +152,7 @@ final class AbstractEnumTypeTest extends AbstractTestCase
         $testIntBackedEnumType = new TestIntBackedEnumType();
         $sqlDeclaration = $testIntBackedEnumType->getSQLDeclaration([], $this->mysqlPlatform);
 
-        /** @info MySQL ENUM stores values as strings; even int-backed enum cases must be quoted to avoid being treated as index references (e.g. `ENUM(1,5,10)` means case-at-position-1 not value=1) */
+        /* the quotes are load-bearing: `ENUM(1,5,10)` means case-at-position-1, not value 1 */
         static::assertStringContainsString("'1'", $sqlDeclaration);
         static::assertStringContainsString("'5'", $sqlDeclaration);
         static::assertStringContainsString("'10'", $sqlDeclaration);

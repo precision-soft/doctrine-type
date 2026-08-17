@@ -63,7 +63,7 @@ class TinyintType extends AbstractType
 
     protected function validateRange(int $tinyintValue): void
     {
-        /** @info the combined signed+unsigned range (-128..255) is intentional: Doctrine does not pass column metadata to convertToDatabaseValue, so both ranges must be accepted; SQL correctness is enforced separately via getSQLDeclaration */
+        /* the combined signed+unsigned range: no column metadata reaches this call, so both halves are accepted */
         if (-128 > $tinyintValue || 255 < $tinyintValue) {
             $this->throwOutOfRangeException($tinyintValue);
         }
@@ -90,7 +90,7 @@ class TinyintType extends AbstractType
         ) {
             $intValue = (int)$value;
 
-            /** @info range check uses the original string so the error message reflects the input verbatim instead of a silently truncated `PHP_INT_MAX` (e.g. `(int)"999999999999999999999"` collapses to `PHP_INT_MAX` on 64-bit) */
+            /* the message carries the original string: `(int)"999999999999999999999"` collapses to `PHP_INT_MAX` */
             if (-128 > $intValue || 255 < $intValue) {
                 $this->throwOutOfRangeException($value);
             }

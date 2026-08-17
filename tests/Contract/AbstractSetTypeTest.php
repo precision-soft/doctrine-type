@@ -148,7 +148,7 @@ final class AbstractSetTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueWithCommaThrows(): void
     {
         $anonymousSetType = new class extends AbstractSetType {
-            /** @return array<int, mixed> */
+            /** @return array<int, string> */
             public function getValues(): array
             {
                 return ['valid', 'has,comma'];
@@ -183,7 +183,7 @@ final class AbstractSetTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueFiltersNullValues(): void
     {
         $anonymousSetType = new class extends AbstractSetType {
-            /** @return array<int, mixed> */
+            /** @return array<int, string> */
             public function getValues(): array
             {
                 return ['valid', 'other'];
@@ -208,7 +208,7 @@ final class AbstractSetTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueAllNullsReturnsNull(): void
     {
         $anonymousSetType = new class extends AbstractSetType {
-            /** @return array<int, mixed> */
+            /** @return array<int, string> */
             public function getValues(): array
             {
                 return ['valid'];
@@ -302,7 +302,7 @@ final class AbstractSetTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueMixedNullAndDuplicates(): void
     {
         $anonymousSetType = new class extends AbstractSetType {
-            /** @return array<int, mixed> */
+            /** @return array<int, string> */
             public function getValues(): array
             {
                 return ['a', 'b'];
@@ -322,6 +322,30 @@ final class AbstractSetTypeTest extends AbstractTestCase
         $databaseValue = $anonymousSetType->convertToDatabaseValue([null, 'a', null, 'a', 'b'], $this->mysqlPlatform);
 
         static::assertSame('a,b', $databaseValue);
+    }
+
+    public function testConvertToDatabaseValueFiltersEmptyStringValues(): void
+    {
+        $anonymousSetType = new class extends AbstractSetType {
+            /** @return array<int, string> */
+            public function getValues(): array
+            {
+                return ['a', '', 'b'];
+            }
+
+            protected function convertValueToDatabase(mixed $value): mixed
+            {
+                return $value;
+            }
+
+            protected function convertValueToPhp(mixed $value): mixed
+            {
+                return $value;
+            }
+        };
+
+        static::assertSame('a,b', $anonymousSetType->convertToDatabaseValue(['a', '', 'b'], $this->mysqlPlatform));
+        static::assertNull($anonymousSetType->convertToDatabaseValue([''], $this->mysqlPlatform));
     }
 
     public function testConvertToPhpValueNonStringThrows(): void
@@ -365,7 +389,7 @@ final class AbstractSetTypeTest extends AbstractTestCase
     public function testConvertToDatabaseValueNonStringIntegerValues(): void
     {
         $anonymousSetType = new class extends AbstractSetType {
-            /** @return array<int, mixed> */
+            /** @return array<int, int> */
             public function getValues(): array
             {
                 return [1, 2, 3];
@@ -512,7 +536,7 @@ final class AbstractSetTypeTest extends AbstractTestCase
     public function testConvertToPhpValueHydratedArrayUntypedSetPassesThrough(): void
     {
         $anonymousSetType = new class extends AbstractSetType {
-            /** @return array<int, mixed> */
+            /** @return array<int, string> */
             public function getValues(): array
             {
                 return ['a', 'b'];

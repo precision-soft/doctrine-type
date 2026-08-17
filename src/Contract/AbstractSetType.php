@@ -34,7 +34,7 @@ abstract class AbstractSetType extends AbstractPhpEnumType
 
         $convertedValues = \array_map(
             function (mixed $enumCase) use ($allowedEnumClass): mixed {
-                /** @info typed enum sets reject null elements explicitly — silent filtering would mask bugs where the consumer expected an enum case and produced null. Untyped sets (no configured enum class) still allow null for backward compatibility with fixtures that use null to skip optional elements */
+                /* a typed set rejects null loudly; an untyped one still accepts it, and that asymmetry is kept */
                 if (null === $enumCase && null !== $allowedEnumClass) {
                     throw new InvalidTypeValueException(
                         \sprintf(
@@ -89,15 +89,14 @@ abstract class AbstractSetType extends AbstractPhpEnumType
             static fn(mixed $convertedValue): bool => null !== $convertedValue && '' !== $convertedValue,
         );
 
-        /** @info array_unique() uses loose comparison by design: backed enum values are homogeneous, so loose comparison never produces false positives */
+        /* loose comparison is safe here: one enum's backing values are homogeneous */
         $uniqueValues = \array_unique($filteredValues);
 
-        /** @info an empty set is stored as NULL, not as an empty string */
         return 0 === \count($uniqueValues) ? null : \implode(',', $uniqueValues);
     }
 
     /**
-     * @return array<int, UnitEnum>|null
+     * @return array<int, UnitEnum|string|int>|null raw values in `notEnum` mode, as in `AbstractPhpEnumType::getValues()`
      * @throws InvalidTypeValueException if the database value is not a string or contains an invalid enum case
      */
     public function convertToPHPValue(mixed $value, AbstractPlatform $platform): ?array
@@ -106,7 +105,7 @@ abstract class AbstractSetType extends AbstractPhpEnumType
             return null;
         }
 
-        /** @info pass through already-hydrated arrays (e.g. tests that round-trip PHP values, or virtual/computed columns that bypass raw DB serialization); symmetric to convertToDatabaseValue: each element must match the configured enum class, otherwise a mismatched/raw element sneaks through unchecked */
+        /* an already-hydrated array reaches here from a virtual column, and every element is still checked */
         if (true === \is_array($value)) {
             $allowedEnumClass = $this->getEnumClass();
 
@@ -144,7 +143,8 @@ abstract class AbstractSetType extends AbstractPhpEnumType
             );
         }
 
-        /** @info `trim()` is defensive: MySQL SET values are stored comma-joined without spaces, but manual edits or copy-pasted fixtures can introduce whitespace which we silently normalize */
+        /* the server never writes spaces around the commas, but a hand-edited column can carry them */
+
         return \array_map(
             fn(mixed $databaseValue): mixed => $this->convertValueToPhp(\trim($databaseValue)),
             \explode(',', $value),

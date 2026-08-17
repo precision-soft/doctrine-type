@@ -1,0 +1,18 @@
+{
+    source: {
+        directories: [
+            "src"
+        ]
+    },
+    tmpDir: ".dev-data/infection",
+    logs: {
+        text: ".dev-data/infection/infection.log",
+        summary: ".dev-data/infection/summary.log"
+    },
+    // without a threshold infection prints a score and exits 0, so the gate section could never fail
+    minMsi: 90,
+    minCoveredMsi: 90,
+    mutators: {
+        "@default": true
+    }
+}

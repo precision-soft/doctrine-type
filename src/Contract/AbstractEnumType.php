@@ -51,7 +51,7 @@ abstract class AbstractEnumType extends AbstractPhpEnumType
 
         $enumClass = $this->getEnumClass();
 
-        /** @info pass through already-hydrated enum cases (e.g. tests that round-trip PHP values, or virtual/computed columns that bypass raw DB serialization); symmetric to the convertToDatabaseValue guard: a `UnitEnum` from a different class must not silently pass through */
+        /* an already-hydrated case reaches here from a virtual column, and still has to belong to this enum */
         if (true === $value instanceof UnitEnum) {
             if (null !== $enumClass && false === $value instanceof $enumClass) {
                 throw new InvalidTypeValueException(

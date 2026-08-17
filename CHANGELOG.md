@@ -2,10 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v3.5.0] - 2026-08-17 - The generated SQL round-trips, or says why it cannot, and exceptions carry structured context
+
+### Added
+
+- `Contract\ExceptionInterface` and `Exception\Trait\ExceptionTrait` — exceptions now carry a structured `context` array alongside the message, read with `getContext()` and set with `setContext()` or the new fourth constructor argument. The context is purely additive: no existing message, code or previous throwable changed, so a consumer logging only `getMessage()` sees exactly what it saw before. Ported from `precision-soft/symfony-console`, which has carried it since v4.5.0, so every package in the portfolio now exposes the same contract. Note for consumers subclassing the package exception: a subclass that already declares its own `$context` property or a `getContext()`/`setContext()` method will collide with the trait. The base `Exception` keeps Doctrine's `Doctrine\DBAL\Exception` marker and now implements both it and `ExceptionInterface`, so an existing `catch (Doctrine\DBAL\Exception)` is unaffected
+- `tests/Functional/SchemaStabilityFunctionalTest.php` — the first tests in this package to execute the SQL it generates. Every type is declared on a real MySQL 8.4 and MariaDB 11.4 server, the table is created, introspected and compared, and the resulting `ALTER TABLE` list is asserted. Establishes what `doctrine:schema:update` actually does with these columns: `enum` (all three flavours), `set`, unsigned `TINYINT` and `DateTimeType` with `update` never settle, while signed `TINYINT` and plain `DateTimeType` do. As a control, every DBAL built-in type was verified to round-trip cleanly in the same environment, so the behaviour belongs to this package and not to the engines
+- `tests/Functional/ValueRoundTripFunctionalTest.php` — `convertToDatabaseValue()` → `INSERT` → `SELECT` → `convertToPHPValue()` against both engines: the enum column holds the backing value and the pure-enum column the case name; an int-backed enum comes back from the server as a *string*, so the round trip depends on `getEnumByValue()`'s integer-formatted-string branch; a `SET` is normalised into declaration order by the server, not the order it was written in; an empty set is stored as `NULL`; the server rejects a value outside the enum; `ON UPDATE CURRENT_TIMESTAMP` really does rewrite the column on every `UPDATE`
+- `tests/Utility/IntegrationDatabase.php`, `tests/Utility/SkipIntegrationException.php` — the integration harness, deliberately DBAL-only so the package does not grow a `doctrine/orm` dev dependency. Connections are built outside the `try` that catches unreachability, so a malformed DSN fails loudly while only a missing server becomes a skip
+- `composer.json` — added a `test-integration` script; `test` now excludes the `integration` group, so `composer check` stays fast and offline
+- `README.md` — a *Schema Stability* section documenting why these columns do not round-trip, which ones are affected, and the `getMappedDatabaseTypes()` override a consumer can add to settle one of them, including the two costs that keep it opt-in: the claim on a database type name is global and exclusive, and owning `tinyint` also takes over every `boolean` column. `tests/Utility/MappedEnumType.php` pins that documented recipe with a test, so it cannot rot
+- two assertions covering the SQL-declaration cache key's remaining components. **The key separates one concrete Type from another** — the cache is `protected static` on `AbstractPhpEnumType` and shared by every subclass, so without `static::class` in the key one enum's `ENUM(...)` is handed to a different enum entirely; the column, the platform and the key order were pinned and this was not. **And `getEnumByValue()`'s integer-formatted-string pattern is anchored at both ends** — `not_a_number` carries no digits and so is rejected either way, while `5abc` is the input that separates the two states: unanchored it matches, `(int)` truncates it to `5`, and a corrupt column value silently hydrates to a valid enum case instead of being refused
+- tests for four branches that had never been executed: the `ksort()` normalisation that is the whole point of v3.4.5 (verified by removing the call, which produces two cache entries instead of one), the platform component of the same cache key, the `getEnumByName()` guard against a class constant that *is* an enum case under a different name, the empty-string half of the `AbstractSetType` filter predicate, a negative int-backed enum value through `getEnumByValue()`'s `-?` pattern, and `DateTimeType` rejecting a truthy non-boolean `update`
+
+### Changed
+
+- `AbstractPhpEnumType::getValues()` — the documented return type widened from `array<int, UnitEnum>` to `array<int, UnitEnum|string|int>`. The declaration described only the enum-backed half of the contract: in `notEnum` mode the only supported usage is an override returning plain scalars — which the method's own exception message instructs — and every arm of `convertValueToDatabase()`, `convertValueToPhp()` and the `(string)` cast in `buildSqlDeclaration()` is written for exactly that. Runtime behaviour is unchanged; subclasses that widened their own declaration to compensate no longer need to
+- `AbstractSetType::convertToPHPValue()` — the same widening, for the same reason: a `notEnum` set hydrates to raw values, never to enum cases
+- `AbstractPhpEnumType` — the comment claiming the caches are "per-class" now describes what the code does. The three static arrays are declared once and shared by every subclass; separation comes from the cache key, which carries `static::class`
+- comments across the package normalized to the house rule — the default is no comment, and a warranted one is a single short line. Every multi-line rationale block, narrative test docblock and shell section header was removed; the shell scripts now carry nothing but their shebang, as in the rest of the portfolio. Nothing behavioral changed. `CONTRIBUTING.md` gained the two sections that now carry the rationale — *Development toolchain* (the pinned pcov and infection builds, the `php.dev.ini` overlay, the mutation thresholds) and *Continuous integration* (the four jobs, and why `--fail-on-skipped` is passed in CI only) — and its *Comments and messages* rules were made explicit. The *Verification* section now documents `.dev/validate/all.sh` and its flags, replacing the stale description of the old hook
+- `README.md` — `TinyintType` now states that it cannot enforce the column's half of its range: `200` is valid unsigned and out of range signed, and the type accepts it either way. Only a server in strict mode refuses it
+
+### Removed
+
+- `phpstan-baseline.neon` — the file contained `ignoreErrors: []` and suppressed nothing. Deleted along with its `includes:` entry; the analysis is clean at level 8 without it
 
 ## [v3.4.5] - 2026-06-17 - Deterministic SQL Declaration Cache Key
 
@@ -298,7 +322,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `README.md` — removed the "unit tests" TODO item now that the suite exists
 
-## [v2.2.1] - 2026-03-19 - Correct getSQLDeclaration casing and replace empty() with explicit checks
+## [v2.2.1] - 2026-03-19 - Correct getSQLDeclaration casing and replace empty () with explicit checks
 
 ### Fixed
 
@@ -390,7 +414,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `PrecisionSoft\Doctrine\Type\Exception\Exception` and `InvalidTypeValueException` — project-specific exception hierarchy rooted at a base exception
 - Docker dev container (`dev/docker/`), git pre-commit hook, php-cs-fixer / PHP_CodeSniffer / PHPUnit scaffolding
 
-[Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.4.5...HEAD
+[Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.5.0...HEAD
+
+[v3.5.0]: https://github.com/precision-soft/doctrine-type/compare/v3.4.5...v3.5.0
 
 [v3.4.5]: https://github.com/precision-soft/doctrine-type/compare/v3.4.4...v3.4.5
 

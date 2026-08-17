@@ -19,7 +19,8 @@ use UnitEnum;
 
 abstract class AbstractPhpEnumType extends AbstractType
 {
-    /** @info caches are per-class; each concrete Type class maps to exactly one enum class, so computed values are always identical */
+    /* the storage is shared by every subclass; separation comes from the cache key always carrying `static::class` */
+
     /** @var array<string, EnumType> */
     protected static array $enumTypeCache = [];
 
@@ -29,9 +30,7 @@ abstract class AbstractPhpEnumType extends AbstractType
     /** @var array<string, string> */
     protected static array $sqlDeclarationCache = [];
 
-    /**
-     * @info not thread-safe — calling this from multiple requests or async contexts can race with concurrent reads against `getEnumType()` / `getEnumByValue()`. Intended for single-threaded test teardown or CLI warm-up; do not invoke from request handlers
-     */
+    /** not thread-safe: intended for test teardown or CLI warm-up, never for a request handler */
     public static function clearCache(): void
     {
         static::$enumTypeCache = [];
@@ -40,7 +39,7 @@ abstract class AbstractPhpEnumType extends AbstractType
     }
 
     /**
-     * @return array<int, UnitEnum>
+     * @return array<int, UnitEnum|string|int> raw values in `notEnum` mode, where an override returns scalars
      * @throws Exception if no enum class is configured and the method is not overridden
      */
     public function getValues(): array
@@ -72,7 +71,7 @@ abstract class AbstractPhpEnumType extends AbstractType
      */
     protected function buildSqlDeclaration(string $sqlKeyword, array $column, AbstractPlatform $platform): string
     {
-        /** @info cache key covers everything that can change the emitted SQL: concrete Type class (enum cases), keyword (ENUM vs SET), platform class (MySQL fast-path vs fallback), and the column array (non-MySQL `getStringTypeDeclarationSQL` reads `length`/`name`/etc.). The column copy is key-sorted so logically identical metadata in a different key order resolves to the same cache entry */
+        /* the column copy is key-sorted so identical metadata in a different key order resolves to one entry */
         $normalizedColumn = $column;
         \ksort($normalizedColumn);
         $cacheKey = static::class . '|' . $sqlKeyword . '|' . $platform::class . '|' . \serialize($normalizedColumn);
@@ -93,7 +92,7 @@ abstract class AbstractPhpEnumType extends AbstractType
             return static::$sqlDeclarationCache[$cacheKey] = $sqlKeyword . '(' . \implode(',', $quotedValues) . ')';
         }
 
-        /** @info non-MySQL platforms need `length` and `name` defaults, otherwise `getStringTypeDeclarationSQL` may fail or produce invalid SQL */
+        /* without these defaults `getStringTypeDeclarationSQL()` fails or emits invalid SQL off MySQL */
         $column['length'] ??= 255;
         $column['name'] ??= '';
 
@@ -216,7 +215,7 @@ abstract class AbstractPhpEnumType extends AbstractType
 
         $resolvedValue = \constant($constantName);
 
-        /** @info guards against class constants that share a name with a non-existent case (e.g. `Foo::BAR_CONST` where `Foo` is an enum but `BAR_CONST` is a regular const, not a case); also enforces case-sensitivity since PHP constants are case-sensitive but our resolved name check makes the match explicit */
+        /* `defined()` also answers true for a plain class constant, which is not a case */
         if (false === $resolvedValue instanceof UnitEnum || $resolvedValue->name !== $enumCaseName) {
             throw new InvalidTypeValueException(
                 \sprintf(

@@ -16,11 +16,6 @@ abstract class AbstractType extends Type
     /** @var array<class-string, string> */
     protected static array $defaultNameCache = [];
 
-    /**
-     * Can be used if you have multiple databases with entities that have the
-     * same name, to easily have distinct types by using the entity manager
-     * name as a prefix.
-     */
     public static function getDefaultNamePrefix(): ?string
     {
         return null;

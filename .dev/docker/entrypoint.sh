@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-# set -x
 
 source "${HOME}/.profile"
 
@@ -18,11 +17,12 @@ fi
 if [[ -f "vendor/autoload.php" ]] && [[ -f "${LOCK_HASH_FILE}" ]] && [[ "${LOCK_HASH}" == "$(cat "${LOCK_HASH_FILE}")" ]]; then
     echo "vendor up to date, skipping composer install"
 else
-    scomposer install || echo "[WARNING] composer install failed" >&2
+    scomposer install
 
     if [[ -n "${LOCK_HASH}" ]] && [[ -f "vendor/autoload.php" ]]; then
         echo "${LOCK_HASH}" > "${LOCK_HASH_FILE}"
     fi
 fi
 
-sleep infinity
+# exec so tini owns sleep: with bash as PID 1 SIGTERM is discarded and stop escalates to SIGKILL
+exec sleep infinity

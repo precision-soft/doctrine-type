@@ -65,6 +65,12 @@ final class DateTimeTypeTest extends AbstractTestCase
         static::assertSame('DATETIME', $sqlDeclaration);
     }
 
+    public function testGetSqlDeclarationWithTruthyNonBooleanUpdateMysql(): void
+    {
+        static::assertSame('DATETIME', $this->dateTimeType->getSQLDeclaration(['update' => 1], $this->mysqlPlatform));
+        static::assertSame('DATETIME', $this->dateTimeType->getSQLDeclaration(['update' => 'yes'], $this->mysqlPlatform));
+    }
+
     public function testGetSqlDeclarationWithUpdateNonMysql(): void
     {
         $sqlDeclaration = $this->dateTimeType->getSQLDeclaration(

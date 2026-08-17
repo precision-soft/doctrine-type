@@ -21,6 +21,7 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.0",
         "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^11.5",
         "precision-soft/symfony-phpunit": "^3.0"
     },
     "autoload": {
@@ -35,12 +36,15 @@
     },
     "scripts": {
         "install-hooks": [
-            "[ \"$COMPOSER_DEV_MODE\" -eq 1 ] && rm -rf .git/hooks && ln -s ../.dev/git-hooks .git/hooks || exit 0"
+            "[ \"${COMPOSER_DEV_MODE:-0}\" -eq 1 ] && { [ -L .git/hooks ] && [ \"$(readlink .git/hooks)\" = ../.dev/git-hooks ] || { rm -rf .git/hooks && ln -s ../.dev/git-hooks .git/hooks; }; } || exit 0"
         ],
-        "test": "simple-phpunit",
+        "test": "simple-phpunit --exclude-group integration",
+        "test-integration": "simple-phpunit --group integration",
         "phpstan": "phpstan analyse --memory-limit=512M",
         "cs-check": "php-cs-fixer fix --dry-run --diff",
         "cs-fix": "php-cs-fixer fix",
+        "deps-audit": "@composer audit --locked",
+        "mutation": "infection --threads=max --test-framework-options=\"--exclude-group=integration\" --initial-tests-php-options=\"-d pcov.enabled=1\"",
         "check": [
             "@cs-check",
             "@phpstan",
