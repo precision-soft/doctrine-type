@@ -8,6 +8,7 @@ $header = 'Copyright (c) Precision Soft';
 
 $finder = PhpCsFixer\Finder::create()
     ->in(__DIR__)
+    ->name('doctrine-type-diagnose')
     ->exclude(['var', 'node_modules', 'vendor']);
 
 return (new PhpCsFixer\Config())->setRules(

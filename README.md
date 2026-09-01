@@ -6,7 +6,7 @@
 [![Code Style PER-CS2.0](https://img.shields.io/badge/code%20style-PER--CS2.0-blue)](https://www.php-fig.org/per/coding-style/)
 [![License MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-Custom Doctrine DBAL types for MySQL `ENUM`, `SET`, `DATETIME` (with `ON UPDATE`), and `TINYINT` columns.
+Custom Doctrine DBAL types for MySQL `ENUM`, `SET`, `DATETIME` (with `ON UPDATE`), and `TINYINT` columns, plus a portable enum type that carries its value set onto PostgreSQL and SQLite as a `CHECK` constraint.
 
 This library provides abstract base classes you can extend to define your own Doctrine types backed by PHP enums, as well as ready-to-use types for `DATETIME` and `TINYINT`.
 
@@ -26,9 +26,12 @@ Any suggestions are welcomed.
 Doctrine DBAL does not ship native support for MySQL-specific column types such as `ENUM`, `SET`, or `TINYINT`. This library fills that gap by providing:
 
 - **AbstractEnumType** -- extend it to map a PHP enum to a MySQL `ENUM` column. On non-MySQL platforms it falls back to the platform's string type.
+- **AbstractPortableEnumType** -- the same, plus an inline `CHECK` constraint on the platforms that have no native `ENUM`, so the value set is enforced by the server everywhere.
 - **AbstractSetType** -- extend it to map a PHP enum to a MySQL `SET` column. Values are stored as a comma-separated string and hydrated as arrays of enum cases.
 - **DateTimeType** -- extends the default Doctrine `DateTimeType` and adds support for `ON UPDATE CURRENT_TIMESTAMP` on MySQL columns.
-- **TinyintType** -- maps a MySQL `TINYINT` column (signed or unsigned) with range validation.
+- **SignedTinyintType** and **UnsignedTinyintType** -- map a MySQL `TINYINT` column and validate the exact range the declaration asks for.
+- **TinyintType** -- the original `TINYINT` type, validating the combined signed and unsigned range. Deprecated in favour of the two above.
+- **SchemaDiagnostics** -- a read-only inspection of an existing schema that names the columns whose database type has no safe global mapping, exposed as the `doctrine-type-diagnose` command.
 
 All types use project-specific exceptions so you can catch type-related errors without catching unrelated exceptions:
 
@@ -96,6 +99,50 @@ $statusType->convertToDatabaseValue(Status::Active, $mysqlPlatform);  // returns
 $statusType->convertToPHPValue('active', $mysqlPlatform);             // returns Status::Active
 ```
 
+### Portable Enum
+
+`AbstractEnumType` declares a native `ENUM` on MySQL and a bare `VARCHAR` everywhere else, so off MySQL nothing stops a value that is not an enum case from reaching the column. Extend `AbstractPortableEnumType` instead when the value set has to be enforced by the server on every platform: MySQL keeps its native `ENUM`, while PostgreSQL and SQLite get the same `VARCHAR` plus an inline `CHECK` listing every case.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Doctrine\Type;
+
+use App\Enum\Status;
+use PrecisionSoft\Doctrine\Type\Contract\AbstractPortableEnumType;
+
+class StatusType extends AbstractPortableEnumType
+{
+    public function getEnumClass(): string
+    {
+        return Status::class;
+    }
+}
+```
+
+```sql
+-- MySQL and MariaDB
+status ENUM('active','inactive')
+-- PostgreSQL and SQLite
+status VARCHAR(255) CHECK ("status" IN ('active','inactive'))
+```
+
+The column name is what the constraint targets, so a declaration reaching a constrained platform without a
+`name` key throws `PrecisionSoft\Doctrine\Type\Exception\Exception` rather than constraining the wrong column. Doctrine always supplies it when it builds a table; a hand-rolled call to `getSQLDeclaration()` must pass it.
+
+Any platform that is neither MySQL, PostgreSQL nor SQLite gets the plain `VARCHAR` fallback, exactly what
+`AbstractEnumType` produces there. The constraint is added by `decorateSqlDeclaration()`, a hook
+`AbstractPhpEnumType` calls only on its non-MySQL branch, so overriding
+`supportsInlineCheckConstraint()` to include MySQL has no effect -- MySQL never reaches the hook, because its native `ENUM` already carries the value set.
+
+> **PostgreSQL cannot alter such a column.** DBAL emits `ALTER TABLE t ALTER col TYPE <declaration>`, and the
+> inline `CHECK` travels with the declaration into a statement PostgreSQL rejects. Creating the table works;
+> changing the column later -- adding an enum case, for instance -- means dropping the constraint and
+> recreating it by hand. The integration suite pins this, so the day DBAL models the constraint the test
+> will say so.
+
 ### Set
 
 Extend `AbstractSetType` the same way. Values are stored as a comma-separated string and hydrated as arrays of enum cases.
@@ -161,36 +208,48 @@ The generated SQL on MySQL will append `ON UPDATE CURRENT_TIMESTAMP` to the colu
 
 ### Tinyint
 
-`TinyintType` maps a MySQL `TINYINT` column. It supports both signed (-128 to 127) and unsigned (0 to 255) declarations:
+Three types map a MySQL `TINYINT` column. `SignedTinyintType` and `UnsignedTinyintType` each declare one signedness and validate exactly the range that declaration allows. `TinyintType` predates them, validates the union of both halves, and is deprecated.
 
-> **MySQL only.** `TinyintType` requires a MySQL platform. Calling `getSQLDeclaration()` on any other platform throws a `PrecisionSoft\Doctrine\Type\Exception\Exception`.
+> **MySQL only.** All three require a MySQL platform. Calling `getSQLDeclaration()` on any other platform throws a `PrecisionSoft\Doctrine\Type\Exception\Exception`.
+
+| Type                  | Registered name    | Declaration        | Accepted range |
+|-----------------------|--------------------|--------------------|----------------|
+| `SignedTinyintType`   | `tinyint_signed`   | `TINYINT`          | -128 to 127    |
+| `UnsignedTinyintType` | `tinyint_unsigned` | `TINYINT UNSIGNED` | 0 to 255       |
+| `TinyintType`         | `tinyint`          | from `unsigned`    | -128 to 255    |
 
 ```php
-#[ORM\Column(type: 'tinyint')]
+#[ORM\Column(type: 'tinyint_signed')]
 private int $priority = 0;
 
-#[ORM\Column(type: 'tinyint', options: ['unsigned' => true])]
+#[ORM\Column(type: 'tinyint_unsigned')]
 private int $level = 0;
 ```
 
-**Range validation:** values are validated on write. Since Doctrine's `convertToDatabaseValue` does not receive column metadata, the combined range (-128 to 255) is accepted by default. The `getSQLDeclaration` method uses the `unsigned` column option to generate the correct SQL (`tinyint` or `tinyint UNSIGNED`).
+```php
+$signedTinyintType->convertToDatabaseValue(127, $abstractPlatform);    // returns 127 (int)
+$signedTinyintType->convertToDatabaseValue('127', $abstractPlatform);  // returns 127 (int)
+$signedTinyintType->convertToDatabaseValue(null, $abstractPlatform);   // returns null
+
+$signedTinyintType->convertToDatabaseValue(200, $abstractPlatform);    // throws InvalidTypeValueException
+$signedTinyintType->convertToDatabaseValue('abc', $abstractPlatform);  // throws InvalidTypeValueException
+```
+
+The variants ignore the `unsigned` column option: the type name is what decides the declaration, so
+`tinyint_signed` emits `TINYINT` even for a column mapped with `options: ['unsigned' => true]`. That is what lets conversion know which range it is guarding, and it keeps the declaration and the validation from ever disagreeing.
+
+#### TinyintType, deprecated
+
+`TinyintType` reads the `unsigned` column option to pick its declaration, but Doctrine's
+`convertToDatabaseValue()` never receives column metadata, so validation cannot know which half it is in and accepts the combined range instead.
 
 > **The type cannot enforce the column's half of that range.** `200` is valid for an unsigned column and out of
 > range for a signed one, and the type accepts it either way. What refuses it is the server, and only while it
 > runs in strict mode: with `STRICT_TRANS_TABLES` both MySQL 8.4 and MariaDB 11.4 raise `1264 Out of range
 > value`, while a non-strict server silently clamps the value instead. Do not rely on this type to keep a
-> signed column inside `-128..127`.
+> signed column inside `-128..127` -- use `SignedTinyintType`.
 
-**Converting values:**
-
-```php
-$tinyintType->convertToDatabaseValue(42, $abstractPlatform);    // returns 42 (int)
-$tinyintType->convertToDatabaseValue('100', $abstractPlatform);  // returns 100 (int)
-$tinyintType->convertToDatabaseValue(null, $abstractPlatform);   // returns null
-
-$tinyintType->convertToDatabaseValue(256, $abstractPlatform);    // throws InvalidTypeValueException
-$tinyintType->convertToDatabaseValue('abc', $abstractPlatform);  // throws InvalidTypeValueException
-```
+It still works unchanged, and a migration is a type-name change on the column plus a `Type::addType()` line; the emitted DDL is identical as long as the column's `unsigned` option matches the variant you pick.
 
 ### Multi-Database Prefix
 
@@ -229,8 +288,12 @@ All custom types extend `AbstractType`, which provides `getDefaultName()` and `g
 - `AbstractType` -- base for all custom types (extends Doctrine `Type`)
     - `AbstractPhpEnumType` -- adds PHP enum resolution and caching
         - `AbstractEnumType` -- MySQL `ENUM` column
+            - `AbstractPortableEnumType` -- adds an inline `CHECK` on the platforms without a native `ENUM`
         - `AbstractSetType` -- MySQL `SET` column
-    - `TinyintType` -- MySQL `TINYINT` column
+    - `AbstractTinyintType` -- MySQL `TINYINT` column, with the accepted range left to the subclass
+        - `SignedTinyintType` -- `TINYINT`, -128 to 127
+        - `UnsignedTinyintType` -- `TINYINT UNSIGNED`, 0 to 255
+        - `TinyintType` -- deprecated, the combined -128 to 255 range
 
 `DateTimeType` extends the built-in Doctrine `DateTimeType` directly (not `AbstractType`) because it overrides the default `datetime` type rather than registering a new one.
 
@@ -256,10 +319,14 @@ The practical effect: `doctrine:schema:update` never reports "nothing to update"
 |-----------------------------------------------|-------------|
 | `AbstractEnumType` (backed, int-backed, pure) | no          |
 | `AbstractSetType`                             | no          |
+| `SignedTinyintType`                           | yes         |
+| `UnsignedTinyintType`                         | no          |
 | `TinyintType`, signed                         | yes         |
 | `TinyintType`, `unsigned`                     | no          |
 | `DateTimeType`, plain                         | yes         |
 | `DateTimeType`, `update`                      | no          |
+
+`SignedTinyintType` round-trips even on a column mapped with `options: ['unsigned' => true]`, because its declaration ignores the option. Everything unsigned lands on DBAL's `tinyint` to `boolean` mapping and never settles, exactly as the plain `TinyintType` did before.
 
 If a settled schema matters to you, declare which database type your type owns. DBAL asks every registered type for this and uses the answer when it introspects, so both sides of the comparison are then produced by the same declaration code:
 
@@ -309,7 +376,8 @@ doctrine:
                     set: string
         types:
             datetime: PrecisionSoft\Doctrine\Type\DateTimeType
-            tinyint: PrecisionSoft\Doctrine\Type\TinyintType
+            tinyint_signed: PrecisionSoft\Doctrine\Type\SignedTinyintType
+            tinyint_unsigned: PrecisionSoft\Doctrine\Type\UnsignedTinyintType
             app_status: App\Doctrine\Type\StatusType
             app_roles: App\Doctrine\Type\RolesType
 ```
@@ -321,11 +389,13 @@ Register types directly with the Doctrine DBAL type system:
 ```php
 use Doctrine\DBAL\Types\Type;
 use PrecisionSoft\Doctrine\Type\DateTimeType;
-use PrecisionSoft\Doctrine\Type\TinyintType;
+use PrecisionSoft\Doctrine\Type\SignedTinyintType;
+use PrecisionSoft\Doctrine\Type\UnsignedTinyintType;
 use App\Doctrine\Type\StatusType;
 
 Type::overrideType('datetime', DateTimeType::class);
-Type::addType('tinyint', TinyintType::class);
+Type::addType(SignedTinyintType::getDefaultName(), SignedTinyintType::class);
+Type::addType(UnsignedTinyintType::getDefaultName(), UnsignedTinyintType::class);
 Type::addType(StatusType::getDefaultName(), StatusType::class);
 ```
 
@@ -349,6 +419,44 @@ Nothing in this package attaches a context of its own — it never catches and r
 
 Every exception in the package implements `Contract\ExceptionInterface`, so a consumer can read the context off any of them without knowing the concrete class. A subclass of your own that already declares a `$context` property or a
 `getContext()`/`setContext()` method will collide with `Exception\Trait\ExceptionTrait`.
+
+## Schema Diagnostics
+
+`SchemaDiagnostics` reads an existing schema and names the columns whose database type has no safe global mapping — the `enum`, `set` and `tinyint` rows of the table in *Schema Stability*. It only reads: it issues no DDL and returns a list of `Diagnostic` objects. The `DateTimeType` rows are out of scope, because
+`ON UPDATE CURRENT_TIMESTAMP` is a column attribute rather than a type and no mapping change would settle it.
+
+```php
+use Doctrine\DBAL\DriverManager;
+use PrecisionSoft\Doctrine\Type\Schema\SchemaDiagnostics;
+
+foreach ((new SchemaDiagnostics())->inspect($connection) as $diagnostic) {
+    echo $diagnostic->severity, ' ', $diagnostic->table, '.', $diagnostic->column, ': ', $diagnostic->message;
+}
+```
+
+The same thing from the shell, on a package installed as a dependency:
+
+```shell
+vendor/bin/doctrine-type-diagnose "mysql://root:root@127.0.0.1:3306/app"
+```
+
+```
+warning	orders.status	enum	Do not map this database type globally; map only this application type with getMappedDatabaseTypes(), or use AbstractPortableEnumType for new constrained columns.
+warning	orders.priority	tinyint	Use SignedTinyintType for conversion-time range enforcement; keep database type mapping column-specific.
+```
+
+Output is tab-separated, one column per line, on standard output; errors go to standard error. The exit code is `0` when nothing was reported, `1` when at least one diagnostic was, `2` for a missing argument and `3` for a failure, so it drops into a pipeline as it is.
+
+The introspection reads `information_schema` rather than Doctrine's type map, because that map is exactly what hides the problem: DBAL resolves a MySQL `tinyint` column to `boolean` and a `set` column to `simple_array`, so a diagnostic built on the mapped type would never see either. MySQL and MariaDB report `enum`, `set` and
+`tinyint` columns (the last split by signedness); PostgreSQL reports columns backed by a `CREATE TYPE ... AS
+ENUM`. Only base tables are inspected -- a view projects a column it cannot redefine, so no type mapping could act on the advice.
+
+Any other platform has no introspection query. `supports()` answers that up front, `inspect()` returns an empty list, and the command says so on standard error instead of exiting quietly as if the schema were clean:
+
+```shell
+vendor/bin/doctrine-type-diagnose "sqlite:///app.db"
+note: this platform has no introspection query, nothing was inspected
+```
 
 ## Dev
 
@@ -387,7 +495,13 @@ stays fast and offline:
 .dev/validate/all.sh --integration
 ```
 
-Tests connect through `DATABASE_URL_MYSQL` and `DATABASE_URL_MARIADB` and skip themselves when those services are not running, so `composer check` never depends on them.
+Tests connect through `DATABASE_URL_MYSQL`, `DATABASE_URL_MARIADB` and `DATABASE_URL_POSTGRESQL` and skip themselves when those services are not running, so `composer check` never depends on them. PostgreSQL is there for the two things only it can answer: whether the portable enum's `CHECK` is enforced by the server, and whether an `ALTER` on that column is accepted.
+
+The diagnostics command runs from the repository as `php bin/doctrine-type-diagnose` - `vendor/bin/` carries it only in a project that installs this package as a dependency:
+
+```shell
+./dc exec dev php bin/doctrine-type-diagnose "$DATABASE_URL_MYSQL"
+```
 
 Build against another PHP version with the `PHP_VERSION` build argument - each version is tagged as its own image, so switching back and forth costs nothing:
 

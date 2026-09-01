@@ -44,7 +44,7 @@ final class ValueRoundTripFunctionalTest extends TestCase
         parent::tearDown();
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testBackedEnumRoundTripsThroughTheServer(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -66,7 +66,7 @@ final class ValueRoundTripFunctionalTest extends TestCase
         static::assertSame(TestBackedEnum::second, $this->readBack($connection, $typeName));
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testIntBackedEnumRoundTripsThroughTheServer(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -83,7 +83,7 @@ final class ValueRoundTripFunctionalTest extends TestCase
         static::assertSame(TestIntBackedEnum::medium, $this->readBack($connection, $typeName));
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testPureEnumRoundTripsByCaseName(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -100,7 +100,7 @@ final class ValueRoundTripFunctionalTest extends TestCase
         static::assertSame(TestSimpleEnum::beta, $this->readBack($connection, $typeName));
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testTheServerRejectsAValueOutsideTheEnum(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -116,7 +116,7 @@ final class ValueRoundTripFunctionalTest extends TestCase
         );
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testSetIsNormalisedIntoDeclarationOrderByTheServer(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -137,7 +137,7 @@ final class ValueRoundTripFunctionalTest extends TestCase
         static::assertSame([TestBackedEnum::first, TestBackedEnum::third], $this->readBack($connection, $typeName));
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testEmptySetIsStoredAsNull(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -154,7 +154,7 @@ final class ValueRoundTripFunctionalTest extends TestCase
         static::assertNull($this->readBack($connection, $typeName));
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testTinyintBoundariesRoundTrip(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -181,7 +181,7 @@ final class ValueRoundTripFunctionalTest extends TestCase
         static::assertSame(255, $this->readBack($connection, $typeName));
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testAValueValidForUnsignedIsRejectedByASignedColumn(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -205,7 +205,7 @@ final class ValueRoundTripFunctionalTest extends TestCase
         );
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testOnUpdateCurrentTimestampFiresOnTheServer(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);

@@ -10,8 +10,8 @@
         summary: ".dev-data/infection/summary.log"
     },
     // without a threshold infection prints a score and exits 0, so the gate section could never fail
-    minMsi: 90,
-    minCoveredMsi: 90,
+    minMsi: 91,
+    minCoveredMsi: 91,
     mutators: {
         "@default": true
     }

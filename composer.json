@@ -34,6 +34,9 @@
             "PrecisionSoft\\Doctrine\\Type\\Test\\": "tests/"
         }
     },
+    "bin": [
+        "bin/doctrine-type-diagnose"
+    ],
     "scripts": {
         "install-hooks": [
             "[ \"${COMPOSER_DEV_MODE:-0}\" -eq 1 ] && { [ -L .git/hooks ] && [ \"$(readlink .git/hooks)\" = ../.dev/git-hooks ] || { rm -rf .git/hooks && ln -s ../.dev/git-hooks .git/hooks; }; } || exit 0"

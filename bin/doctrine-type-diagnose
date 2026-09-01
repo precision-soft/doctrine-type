@@ -1,0 +1,42 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * Copyright (c) Precision Soft
+ */
+
+use PrecisionSoft\Doctrine\Type\Command\SchemaDiagnosticsCommand;
+
+/* composer's bin proxy sets the first entry, which is the only one that survives a custom `vendor-dir` */
+$autoloadPathList = [
+    $GLOBALS['_composer_autoload_path'] ?? null,
+    __DIR__ . '/../vendor/autoload.php',
+    __DIR__ . '/../../../autoload.php',
+];
+
+$autoloadPath = null;
+
+foreach ($autoloadPathList as $candidatePath) {
+    if (true === \is_string($candidatePath) && true === \is_file($candidatePath)) {
+        $autoloadPath = $candidatePath;
+
+        break;
+    }
+}
+
+if (null === $autoloadPath) {
+    /* the exit code is spelled out: `SchemaDiagnosticsCommand::EXIT_FAILURE` is not loadable before the autoloader */
+    \fwrite(\STDERR, "error: composer autoloader not found, run `composer install`\n");
+
+    exit(3);
+}
+
+require $autoloadPath;
+
+/* not `$argv`: that global exists only while `register_argc_argv` is on, and an empty list prints the usage */
+/** @var list<string> $argumentList */
+$argumentList = $_SERVER['argv'] ?? [];
+
+exit((new SchemaDiagnosticsCommand())->run($argumentList));

@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
+use PrecisionSoft\Doctrine\Type\SignedTinyintType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\IntegrationDatabase;
 use PrecisionSoft\Doctrine\Type\Test\Utility\MappedEnumType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\SkipIntegrationException;
@@ -25,6 +26,7 @@ use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedSetType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestIntBackedEnumType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnumType;
 use PrecisionSoft\Doctrine\Type\TinyintType;
+use PrecisionSoft\Doctrine\Type\UnsignedTinyintType;
 
 /** @internal */
 #[Group('integration')]
@@ -43,7 +45,7 @@ final class SchemaStabilityFunctionalTest extends TestCase
         parent::tearDown();
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testEnumColumnsNeverSettle(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -64,7 +66,7 @@ final class SchemaStabilityFunctionalTest extends TestCase
         }
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testSetColumnNeverSettles(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -74,7 +76,7 @@ final class SchemaStabilityFunctionalTest extends TestCase
         static::assertFalse($this->compare($connection, $table)->isEmpty());
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testTheAlterStatementIsAByteIdenticalNoOp(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -90,7 +92,7 @@ final class SchemaStabilityFunctionalTest extends TestCase
         );
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testSignedTinyintSettlesAndUnsignedDoesNot(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -112,7 +114,38 @@ final class SchemaStabilityFunctionalTest extends TestCase
         static::assertFalse($this->compare($connection, $unsignedTable)->isEmpty());
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
+    public function testTheSignedVariantSettlesEvenWhenTheColumnAsksForUnsigned(string $environmentVariable): void
+    {
+        $connection = $this->boot($environmentVariable);
+
+        $table = $this->createProbeTable(
+            $connection,
+            'tinyint_column',
+            SignedTinyintType::getDefaultName(),
+            ['unsigned' => true],
+        );
+
+        static::assertTrue(
+            $this->compare($connection, $table)->isEmpty(),
+            'the signed variant declares TINYINT whatever the column asks, so it must round-trip',
+        );
+    }
+
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
+    public function testTheUnsignedVariantNeverSettles(string $environmentVariable): void
+    {
+        $connection = $this->boot($environmentVariable);
+
+        $table = $this->createProbeTable($connection, 'tinyint_column', UnsignedTinyintType::getDefaultName());
+
+        static::assertFalse(
+            $this->compare($connection, $table)->isEmpty(),
+            'the unsigned variant inherits the unsigned TINYINT limitation documented in the README',
+        );
+    }
+
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testPlainDateTimeSettles(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -122,7 +155,7 @@ final class SchemaStabilityFunctionalTest extends TestCase
         static::assertTrue($this->compare($connection, $table)->isEmpty());
     }
 
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testDateTimeWithOnUpdateNeverSettles(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -144,7 +177,7 @@ final class SchemaStabilityFunctionalTest extends TestCase
     /** separate process because the type map is global: registering this type invalidates every test above */
     #[RunInSeparateProcess]
     #[PreserveGlobalState(false)]
-    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderEngine')]
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testDeclaringTheDatabaseTypeMakesTheSchemaSettle(string $environmentVariable): void
     {
         /* before the connection exists, so no platform can cache its type mappings first */

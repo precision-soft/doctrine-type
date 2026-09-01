@@ -96,7 +96,26 @@ abstract class AbstractPhpEnumType extends AbstractType
         $column['length'] ??= 255;
         $column['name'] ??= '';
 
-        return static::$sqlDeclarationCache[$cacheKey] = $platform->getStringTypeDeclarationSQL($column);
+        return static::$sqlDeclarationCache[$cacheKey] = $this->decorateSqlDeclaration(
+            $platform->getStringTypeDeclarationSQL($column),
+            $quotedValues,
+            $column,
+            $platform,
+        );
+    }
+
+    /**
+     * @param array<int, string> $quotedValues
+     * @param array<string, mixed> $column
+     * @throws Exception if the declaration cannot be decorated for this platform
+     */
+    protected function decorateSqlDeclaration(
+        string $declaration,
+        array $quotedValues,
+        array $column,
+        AbstractPlatform $platform,
+    ): string {
+        return $declaration;
     }
 
     /**

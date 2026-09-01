@@ -16,8 +16,10 @@ use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Tools\DsnParser;
 use Doctrine\DBAL\Types\Type;
 use PrecisionSoft\Doctrine\Type\DateTimeType;
+use PrecisionSoft\Doctrine\Type\Exception\Exception;
+use PrecisionSoft\Doctrine\Type\SignedTinyintType;
 use PrecisionSoft\Doctrine\Type\TinyintType;
-use RuntimeException;
+use PrecisionSoft\Doctrine\Type\UnsignedTinyintType;
 
 /** @internal */
 final class IntegrationDatabase
@@ -28,10 +30,16 @@ final class IntegrationDatabase
     public const DATE_TIME_TYPE_NAME = 'psDateTime';
 
     /** @return iterable<string, array{string}> */
-    public static function dataProviderEngine(): iterable
+    public static function dataProviderMySqlEngine(): iterable
     {
         yield 'mysql' => ['DATABASE_URL_MYSQL'];
         yield 'mariadb' => ['DATABASE_URL_MARIADB'];
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function dataProviderPostgreSqlEngine(): iterable
+    {
+        yield 'postgresql' => ['DATABASE_URL_POSTGRESQL'];
     }
 
     /**
@@ -50,7 +58,7 @@ final class IntegrationDatabase
 
         /* outside the try below, so only an unreachable server can become a skip */
         $connection = DriverManager::getConnection(
-            (new DsnParser(['mysql' => 'pdo_mysql', 'mariadb' => 'pdo_mysql']))->parse($databaseUrl),
+            (new DsnParser(['mysql' => 'pdo_mysql', 'mariadb' => 'pdo_mysql', 'postgresql' => 'pdo_pgsql']))->parse($databaseUrl),
         );
 
         try {
@@ -76,7 +84,10 @@ final class IntegrationDatabase
             TestBackedSetType::getDefaultName() => TestBackedSetType::class,
             TestIntBackedSetType::getDefaultName() => TestIntBackedSetType::class,
             TestSimpleSetType::getDefaultName() => TestSimpleSetType::class,
+            TestPortableEnumType::getDefaultName() => TestPortableEnumType::class,
             TinyintType::getDefaultName() => TinyintType::class,
+            SignedTinyintType::getDefaultName() => SignedTinyintType::class,
+            UnsignedTinyintType::getDefaultName() => UnsignedTinyintType::class,
             static::DATE_TIME_TYPE_NAME => DateTimeType::class,
         ];
 
@@ -86,15 +97,15 @@ final class IntegrationDatabase
             }
 
             if (false === (Type::getType($typeName) instanceof $typeClass)) {
-                throw new RuntimeException(\sprintf('`%s` is not registered as `%s`', $typeName, $typeClass));
+                throw new Exception(\sprintf('`%s` is not registered as `%s`', $typeName, $typeClass));
             }
         }
     }
 
-    /** drops first, so a table left by a crashed run cannot silently satisfy the next one */
+    /* drops first, so a table left by a crashed run cannot silently satisfy the next one */
     public static function createTable(Connection $connection, Table $table): void
     {
-        static::dropTable($connection, static::TABLE_NAME);
+        static::dropTable($connection, $table->getName());
 
         foreach ((new Schema([$table]))->toSql($connection->getDatabasePlatform()) as $sql) {
             $connection->executeStatement($sql);
@@ -103,6 +114,9 @@ final class IntegrationDatabase
 
     public static function dropTable(Connection $connection, string $tableName): void
     {
-        $connection->executeStatement(\sprintf('DROP TABLE IF EXISTS `%s`', $tableName));
+        $connection->executeStatement(\sprintf(
+            'DROP TABLE IF EXISTS %s',
+            $connection->getDatabasePlatform()->quoteSingleIdentifier($tableName),
+        ));
     }
 }
