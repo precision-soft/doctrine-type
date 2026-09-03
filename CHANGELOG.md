@@ -456,6 +456,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Docker dev container (`dev/docker/`), git pre-commit hook, php-cs-fixer / PHP_CodeSniffer / PHPUnit scaffolding
 
 [Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.7.0...HEAD
+
 [v3.7.0]: https://github.com/precision-soft/doctrine-type/compare/v3.6.0...v3.7.0
 
 [v3.6.0]: https://github.com/precision-soft/doctrine-type/compare/v3.5.0...v3.6.0
