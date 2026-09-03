@@ -25,8 +25,8 @@ use PrecisionSoft\Doctrine\Type\Test\Utility\SkipIntegrationException;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedEnumType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedSetType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestIntBackedEnumType;
-use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnumType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestPortableEnumType;
+use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnumType;
 use PrecisionSoft\Doctrine\Type\TinyintType;
 use PrecisionSoft\Doctrine\Type\UnsignedTinyintType;
 

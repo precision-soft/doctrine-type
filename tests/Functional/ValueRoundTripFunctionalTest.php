@@ -16,6 +16,7 @@ use Doctrine\DBAL\Types\Type;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use PrecisionSoft\Doctrine\Type\SignedTinyintType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\IntegrationDatabase;
 use PrecisionSoft\Doctrine\Type\Test\Utility\SkipIntegrationException;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedEnum;
@@ -25,7 +26,6 @@ use PrecisionSoft\Doctrine\Type\Test\Utility\TestIntBackedEnum;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestIntBackedEnumType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnum;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnumType;
-use PrecisionSoft\Doctrine\Type\SignedTinyintType;
 use PrecisionSoft\Doctrine\Type\TinyintType;
 use PrecisionSoft\Doctrine\Type\UnsignedTinyintType;
 
