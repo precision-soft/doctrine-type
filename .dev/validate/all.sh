@@ -66,7 +66,8 @@ RUN_PHP_SECTIONS="true"
 RUN_EXAMPLE_SECTION="${EXAMPLE_REQUESTED}"
 
 if [[ "true" = "${STAGED_ONLY_REQUESTED}" ]]; then
-    RUN_PHP_SECTIONS="$(has_staged_change '\.php$')"
+    # `bin/doctrine-type-diagnose` is php without the extension: a commit touching only it must still run the php sections
+    RUN_PHP_SECTIONS="$(has_staged_change '(\.php$|^bin/)')"
     RUN_EXAMPLE_SECTION="$(has_staged_change '^\.example/')"
 
     if [[ "false" = "${RUN_PHP_SECTIONS}" ]] && [[ "false" = "${RUN_EXAMPLE_SECTION}" ]]; then
