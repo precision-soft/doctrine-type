@@ -1,0 +1,52 @@
+{
+    "name": "precision-soft/doctrine-type-example",
+    "description": "The product catalogue schema of a shop - enum, set, portable enum, tinyint and on-update columns created, diffed and diagnosed on the real engines - whose test suite exercises every public capability of precision-soft/doctrine-type",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.2",
+        "doctrine/dbal": "^4.0",
+        "precision-soft/doctrine-type": "*@dev"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^11.5",
+        "symfony/phpunit-bridge": "^7.0 || ^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "PrecisionSoft\\Doctrine\\Type\\Example\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "PrecisionSoft\\Dev\\PhpStan\\": "../.dev/phpstan/",
+            "PrecisionSoft\\Doctrine\\Type\\Example\\Test\\": "tests/"
+        }
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "scripts": {
+        "test": "simple-phpunit --fail-on-skipped",
+        "phpstan": "phpstan analyse --memory-limit=512M",
+        "check": [
+            "@phpstan",
+            "@test"
+        ]
+    },
+    "config": {
+        "platform": {
+            "php": "8.2"
+        },
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
