@@ -11,6 +11,7 @@ namespace PrecisionSoft\Doctrine\Type\Test\Schema;
 use Doctrine\DBAL\DriverManager;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Schema\SchemaDiagnostics;
 
 /** @internal */
@@ -31,6 +32,14 @@ final class SchemaDiagnosticsTest extends TestCase
         yield 'enum' => ['enum'];
         yield 'set' => ['set'];
         yield 'uppercase enum' => ['ENUM'];
+    }
+
+    /** @return iterable<string, array{array<string, mixed>}> */
+    public static function dataProviderIntrospectablePlatform(): iterable
+    {
+        yield 'mysql' => [['driver' => 'pdo_mysql', 'serverVersion' => '8.4.0']];
+        yield 'mariadb' => [['driver' => 'pdo_mysql', 'serverVersion' => '11.4.0-MariaDB']];
+        yield 'postgresql' => [['driver' => 'pdo_pgsql', 'serverVersion' => '17']];
     }
 
     #[DataProvider('dataProviderConstrainedDatabaseType')]
@@ -70,14 +79,6 @@ final class SchemaDiagnosticsTest extends TestCase
         static::assertNull((new SchemaDiagnostics())->diagnose('orders', 'title', $databaseType));
     }
 
-    /** @return iterable<string, array{array<string, mixed>}> */
-    public static function dataProviderIntrospectablePlatform(): iterable
-    {
-        yield 'mysql' => [['driver' => 'pdo_mysql', 'serverVersion' => '8.4.0']];
-        yield 'mariadb' => [['driver' => 'pdo_mysql', 'serverVersion' => '11.4.0-MariaDB']];
-        yield 'postgresql' => [['driver' => 'pdo_pgsql', 'serverVersion' => '17']];
-    }
-
     /** @param array<string, mixed> $connectionParameters */
     #[DataProvider('dataProviderIntrospectablePlatform')]
     public function testAPlatformWithAnIntrospectionQueryIsSupported(array $connectionParameters): void
@@ -86,6 +87,40 @@ final class SchemaDiagnosticsTest extends TestCase
 
         try {
             static::assertTrue((new SchemaDiagnostics())->supports($connection));
+        } finally {
+            $connection->close();
+        }
+    }
+
+    /**
+     * the queries filter on the current database, so a url without one would inspect nothing and report it clean
+     *
+     * @param array<string, mixed> $connectionParameters
+     */
+    #[DataProvider('dataProviderIntrospectablePlatform')]
+    public function testAConnectionWithoutADatabaseIsRefusedBeforeAnyQuery(array $connectionParameters): void
+    {
+        $connection = DriverManager::getConnection($connectionParameters);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('the connection names no database, nothing was inspected');
+
+        try {
+            (new SchemaDiagnostics())->inspect($connection);
+        } finally {
+            $connection->close();
+        }
+    }
+
+    public function testAnEmptyDatabaseNameIsRefusedLikeAMissingOne(): void
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_mysql', 'serverVersion' => '8.4.0', 'dbname' => '']);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('the connection names no database, nothing was inspected');
+
+        try {
+            (new SchemaDiagnostics())->inspect($connection);
         } finally {
             $connection->close();
         }

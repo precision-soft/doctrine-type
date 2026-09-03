@@ -30,13 +30,6 @@ final class AbstractPortableEnumTypeTest extends TestCase
         yield 'sqlite' => [new SQLitePlatform()];
     }
 
-    protected function tearDown(): void
-    {
-        AbstractPhpEnumType::clearCache();
-
-        parent::tearDown();
-    }
-
     #[DataProvider('dataProviderConstrainedPlatform')]
     public function testAConstrainedPlatformGetsAVarcharCarryingEveryEnumValue(AbstractPlatform $platform): void
     {
@@ -46,10 +39,28 @@ final class AbstractPortableEnumTypeTest extends TestCase
         );
 
         static::assertStringContainsString('VARCHAR(32)', $sqlDeclaration);
-        static::assertStringContainsString('CHECK ("status" IN (', $sqlDeclaration);
+        static::assertStringContainsString('CHECK (status IN (', $sqlDeclaration);
         static::assertStringContainsString("'first_value'", $sqlDeclaration);
         static::assertStringContainsString("'second_value'", $sqlDeclaration);
         static::assertStringContainsString("'third_value'", $sqlDeclaration);
+    }
+
+    /** DBAL hands the declaration the name it already quoted, so the constraint must use it verbatim */
+    #[DataProvider('dataProviderConstrainedPlatform')]
+    public function testTheConstraintUsesTheColumnNameAsDbalQuotedIt(AbstractPlatform $platform): void
+    {
+        $testPortableEnumType = new TestPortableEnumType();
+
+        static::assertStringContainsString(
+            'CHECK ("order" IN (',
+            $testPortableEnumType->getSQLDeclaration(['name' => '"order"', 'length' => 32], $platform),
+            'a quoted reserved word must not be quoted a second time',
+        );
+        static::assertStringContainsString(
+            'CHECK (Status IN (',
+            $testPortableEnumType->getSQLDeclaration(['name' => 'Status', 'length' => 32], $platform),
+            'an unquoted name is folded by the server, so the constraint must stay unquoted too',
+        );
     }
 
     #[DataProvider('dataProviderConstrainedPlatform')]
@@ -75,15 +86,15 @@ final class AbstractPortableEnumTypeTest extends TestCase
     public function testTheConstrainedDeclarationGoesThroughTheSharedCache(): void
     {
         $anonymousPortableEnumType = new class extends AbstractPortableEnumType {
-            public function getEnumClass(): string
-            {
-                return TestBackedEnum::class;
-            }
-
             /** @return array<string, string> */
             public static function getSqlDeclarationCache(): array
             {
                 return static::$sqlDeclarationCache;
+            }
+
+            public function getEnumClass(): string
+            {
+                return TestBackedEnum::class;
             }
         };
 
@@ -96,5 +107,12 @@ final class AbstractPortableEnumTypeTest extends TestCase
         static::assertSame($firstDeclaration, $secondDeclaration);
         static::assertStringContainsString('CHECK', $firstDeclaration);
         static::assertCount(1, $anonymousPortableEnumType::getSqlDeclarationCache());
+    }
+
+    protected function tearDown(): void
+    {
+        AbstractPhpEnumType::clearCache();
+
+        parent::tearDown();
     }
 }

@@ -9,10 +9,12 @@ declare(strict_types=1);
 namespace PrecisionSoft\Doctrine\Type\Test\Functional;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
+use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Schema\Diagnostic;
 use PrecisionSoft\Doctrine\Type\Schema\SchemaDiagnostics;
 use PrecisionSoft\Doctrine\Type\Test\Utility\IntegrationDatabase;
@@ -28,24 +30,9 @@ final class SchemaDiagnosticsFunctionalTest extends TestCase
 
     protected const VIEW_NAME = 'schema_diagnostics_probe_view';
 
+    protected const POSTGRESQL_OTHER_SCHEMA_NAME = 'schema_diagnostics_other';
+
     private ?Connection $connection = null;
-
-    protected function tearDown(): void
-    {
-        if (null !== $this->connection) {
-            $this->connection->executeStatement('DROP VIEW IF EXISTS ' . static::VIEW_NAME);
-            $this->connection->executeStatement('DROP TABLE IF EXISTS ' . static::TABLE_NAME);
-
-            if (true === $this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform) {
-                $this->connection->executeStatement('DROP TYPE IF EXISTS ' . static::POSTGRESQL_ENUM_TYPE_NAME);
-            }
-
-            $this->connection->close();
-            $this->connection = null;
-        }
-
-        parent::tearDown();
-    }
 
     #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testEveryUnmappedMySqlColumnIsReportedAndNothingElseIs(string $environmentVariable): void
@@ -86,9 +73,9 @@ final class SchemaDiagnosticsFunctionalTest extends TestCase
         $connection = $this->boot($environmentVariable);
 
         $connection->executeStatement('DROP TABLE IF EXISTS ' . static::TABLE_NAME);
-        $connection->executeStatement('DROP TYPE IF EXISTS ' . static::POSTGRESQL_ENUM_TYPE_NAME);
+        $connection->executeStatement('DROP type IF EXISTS ' . static::POSTGRESQL_ENUM_TYPE_NAME);
         $connection->executeStatement(\sprintf(
-            "CREATE TYPE %s AS ENUM ('first_value','second_value')",
+            "CREATE type %s AS ENUM ('first_value','second_value')",
             static::POSTGRESQL_ENUM_TYPE_NAME,
         ));
         $connection->executeStatement(\sprintf(
@@ -109,6 +96,75 @@ final class SchemaDiagnosticsFunctionalTest extends TestCase
         static::assertSame([], $this->inspectTable($connection, static::VIEW_NAME));
         static::assertSame('enum', $diagnostics['status']->databaseType);
         static::assertStringContainsString('AbstractPortableEnumType', $diagnostics['status']->message);
+    }
+
+    /** `current_schema()` is only the first entry of `search_path`; an application schema behind it must be seen too */
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderPostgreSqlEngine')]
+    public function testAPostgreSqlEnumColumnInAnotherSchemaOnTheSearchPathIsReported(string $environmentVariable): void
+    {
+        $connection = $this->boot($environmentVariable);
+        $otherSchema = static::POSTGRESQL_OTHER_SCHEMA_NAME;
+
+        $connection->executeStatement(\sprintf('DROP SCHEMA IF EXISTS %s CASCADE', $otherSchema));
+        $connection->executeStatement(\sprintf('CREATE SCHEMA %s', $otherSchema));
+        $connection->executeStatement(\sprintf(
+            "CREATE type %s.%s AS ENUM ('first_value','second_value')",
+            $otherSchema,
+            static::POSTGRESQL_ENUM_TYPE_NAME,
+        ));
+        $connection->executeStatement(\sprintf(
+            'CREATE TABLE %s.%s (status %s.%s, title VARCHAR(32))',
+            $otherSchema,
+            static::TABLE_NAME,
+            $otherSchema,
+            static::POSTGRESQL_ENUM_TYPE_NAME,
+        ));
+        $connection->executeStatement(\sprintf('SET search_path TO public, %s', $otherSchema));
+
+        $diagnostics = $this->inspectProbeTable($connection);
+
+        static::assertSame(['status'], \array_keys($diagnostics));
+        static::assertSame('enum', $diagnostics['status']->databaseType);
+    }
+
+    /** `DATABASE()` is null on such a connection, so the query would match nothing and the schema would look clean */
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
+    public function testAMySqlConnectionWithoutADatabaseIsRefused(string $environmentVariable): void
+    {
+        $connectionParameters = $this->boot($environmentVariable)->getParams();
+        unset($connectionParameters['dbname']);
+        $connectionWithoutDatabase = DriverManager::getConnection($connectionParameters);
+
+        try {
+            $connectionWithoutDatabase->executeQuery('SELECT 1');
+
+            $this->expectException(Exception::class);
+            $this->expectExceptionMessage('the connection names no database, nothing was inspected');
+
+            (new SchemaDiagnostics())->inspect($connectionWithoutDatabase);
+        } finally {
+            $connectionWithoutDatabase->close();
+        }
+    }
+
+    protected function tearDown(): void
+    {
+        if (null !== $this->connection) {
+            $this->connection->executeStatement('DROP VIEW IF EXISTS ' . static::VIEW_NAME);
+            $this->connection->executeStatement('DROP TABLE IF EXISTS ' . static::TABLE_NAME);
+
+            if (true === $this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform) {
+                $this->connection->executeStatement('DROP type IF EXISTS ' . static::POSTGRESQL_ENUM_TYPE_NAME);
+                $this->connection->executeStatement(
+                    'DROP SCHEMA IF EXISTS ' . static::POSTGRESQL_OTHER_SCHEMA_NAME . ' CASCADE',
+                );
+            }
+
+            $this->connection->close();
+            $this->connection = null;
+        }
+
+        parent::tearDown();
     }
 
     private function boot(string $environmentVariable): Connection

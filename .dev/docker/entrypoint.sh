@@ -24,5 +24,4 @@ else
     fi
 fi
 
-# exec so tini owns sleep: with bash as PID 1 SIGTERM is discarded and stop escalates to SIGKILL
 exec sleep infinity

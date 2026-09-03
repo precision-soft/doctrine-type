@@ -9,8 +9,10 @@ declare(strict_types=1);
 namespace PrecisionSoft\Doctrine\Type\Test;
 
 use Doctrine\DBAL\Platforms\MySQLPlatform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use PrecisionSoft\Doctrine\Type\Exception\Exception;
 use PrecisionSoft\Doctrine\Type\Exception\InvalidTypeValueException;
 use PrecisionSoft\Doctrine\Type\SignedTinyintType;
 use PrecisionSoft\Doctrine\Type\UnsignedTinyintType;
@@ -145,6 +147,25 @@ final class TinyintVariantsTest extends TestCase
         $this->expectExceptionMessage(\sprintf('value `%s` is out of TINYINT range (0 to 255)', $oversizedValue));
 
         (new UnsignedTinyintType())->convertToDatabaseValue($oversizedValue, new MySQLPlatform());
+    }
+
+    /** the declaration is MySQL-only while conversion works everywhere, so the refusal has to say which platform arrived */
+    public function testTheVariantsRefuseToDeclareAColumnOffMysql(): void
+    {
+        $postgreSqlPlatform = new PostgreSQLPlatform();
+
+        foreach ([new SignedTinyintType(), new UnsignedTinyintType()] as $tinyintType) {
+            try {
+                $tinyintType->getSQLDeclaration([], $postgreSqlPlatform);
+
+                static::fail(\sprintf('`%s` declared a column on postgresql', $tinyintType::class));
+            } catch (Exception $exception) {
+                static::assertSame(
+                    \sprintf('this type only supports mysql, got `%s`', PostgreSQLPlatform::class),
+                    $exception->getMessage(),
+                );
+            }
+        }
     }
 
     public function testTheVariantsStillAcceptNull(): void

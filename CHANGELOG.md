@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [v3.7.0] - 2026-09-03 - Constraints on quoted column names, diagnostics that never report an uninspected schema as clean, and the example application
+
+### Added
+
+- `doctrine-type-diagnose --help` (or `-h`) prints the usage on standard output and exits with `0`. Until now the flag was taken for a database url, so the command tried to connect to it and exited with `3` and a driver error instead of telling what it expects
+- `.example/` — a runnable product catalogue whose test suite exercises every type of the package on the real engines: the enum, set, portable enum, tinyint and on-update columns created, written and read back on MySQL, MariaDB and PostgreSQL (the portable `CHECK` also on SQLite), the schema churn of the README's *Schema Stability* table asserted as expected output, `SchemaDiagnostics` on the catalogue and `doctrine-type-diagnose` run as a process. It installs the package from the working tree through a path repository and is gated by `.dev/validate/all.sh --example` and the `example` CI job, which now carries the three database services; the directory is `export-ignore`d, so nothing reaches a consumer's `vendor/`
+- `Command\SchemaDiagnosticsCommand` takes the standard output and standard error streams as constructor arguments, defaulting to the process's own, so the command can be driven and read in a test without touching the process streams. The command and the binary had no test until now; they have a unit suite over memory streams and a functional suite that runs `bin/doctrine-type-diagnose` as a process against the three engines
+
+### Fixed
+
+- `Contract\AbstractPortableEnumType` writes the column name into the `CHECK` exactly as DBAL supplies it. DBAL hands the declaration the name it has already quoted where the platform needs quoting and bare otherwise, and the type quoted it a second time: a column declared as `"order"` produced `CHECK ("""order""" IN (...))`, which PostgreSQL rejects as a column that does not exist and SQLite reads as a string literal that is never in the list, so every insert failed; an unquoted `Status`, which PostgreSQL folds to `status`, produced `CHECK ("Status" IN (...))` and the table could not be created. Only lower-case, non-reserved names ever worked; those are unchanged
+- `Schema\SchemaDiagnostics::inspect()` refuses a connection whose url names no database. Both introspection queries filter on the current database, which is `NULL` on such a connection, so the query matched nothing and `doctrine-type-diagnose mysql://root:root@127.0.0.1` exited with `0` as if the schema were clean. It now throws `Exception\Exception` and the command exits with `3`
+- `Schema\SchemaDiagnostics` looks for PostgreSQL enum columns in every schema on the connection's `search_path` (`current_schemas(false)`), where it looked in `current_schema()` only -- the first entry. An application keeping its tables in a schema behind `public` on the path got an empty, clean report
+- `doctrine-type-diagnose` exits with `2` and the usage when it receives more than one argument, where it silently ignored everything after the first one
+
 ## [v3.6.0] - 2026-09-01 - Portable enum constraints, explicit tinyint ranges and a schema diagnostics command
 
 ### Added
@@ -440,7 +455,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `PrecisionSoft\Doctrine\Type\Exception\Exception` and `InvalidTypeValueException` — project-specific exception hierarchy rooted at a base exception
 - Docker dev container (`dev/docker/`), git pre-commit hook, php-cs-fixer / PHP_CodeSniffer / PHPUnit scaffolding
 
-[Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.6.0...HEAD
+[Unreleased]: https://github.com/precision-soft/doctrine-type/compare/v3.7.0...HEAD
+[v3.7.0]: https://github.com/precision-soft/doctrine-type/compare/v3.6.0...v3.7.0
 
 [v3.6.0]: https://github.com/precision-soft/doctrine-type/compare/v3.5.0...v3.6.0
 

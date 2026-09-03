@@ -38,18 +38,15 @@ final class AbstractPhpEnumTypeTest extends AbstractTestCase
         return new MockDto(stdClass::class);
     }
 
-    protected function setUp(): void
+    /** @return array<string, array{string}> */
+    public static function provideNonIntegerFormattedStrings(): array
     {
-        parent::setUp();
-
-        $this->mysqlPlatform = new MySQLPlatform();
-    }
-
-    protected function tearDown(): void
-    {
-        AbstractPhpEnumType::clearCache();
-
-        parent::tearDown();
+        return [
+            'trailing characters after a valid case value' => ['5abc'],
+            'leading characters before a valid case value' => ['abc5'],
+            'trailing characters after a negative value' => ['-5abc'],
+            'inner whitespace' => ['5 5'],
+        ];
     }
 
     public function testBackedEnumConvertToDatabaseValue(): void
@@ -336,17 +333,6 @@ final class AbstractPhpEnumTypeTest extends AbstractTestCase
         $testIntBackedEnumType->convertToPHPValue($databaseValue, $this->mysqlPlatform);
     }
 
-    /** @return array<string, array{string}> */
-    public static function provideNonIntegerFormattedStrings(): array
-    {
-        return [
-            'trailing characters after a valid case value' => ['5abc'],
-            'leading characters before a valid case value' => ['abc5'],
-            'trailing characters after a negative value' => ['-5abc'],
-            'inner whitespace' => ['5 5'],
-        ];
-    }
-
     public function testStringBackedEnumConvertToPhpValueIntThrows(): void
     {
         $testBackedEnumType = new TestBackedEnumType();
@@ -389,15 +375,15 @@ final class AbstractPhpEnumTypeTest extends AbstractTestCase
     public function testTheDeclarationCacheKeyIsInsensitiveToColumnKeyOrder(): void
     {
         $anonymousEnumType = new class extends AbstractEnumType {
-            public function getEnumClass(): string
-            {
-                return TestBackedEnum::class;
-            }
-
             /** @return array<string, string> */
             public static function getSqlDeclarationCache(): array
             {
                 return static::$sqlDeclarationCache;
+            }
+
+            public function getEnumClass(): string
+            {
+                return TestBackedEnum::class;
             }
         };
 
@@ -427,15 +413,15 @@ final class AbstractPhpEnumTypeTest extends AbstractTestCase
     public function testTheDeclarationCacheIsKeyedByPlatform(): void
     {
         $anonymousEnumType = new class extends AbstractEnumType {
-            public function getEnumClass(): string
-            {
-                return TestBackedEnum::class;
-            }
-
             /** @return array<string, string> */
             public static function getSqlDeclarationCache(): array
             {
                 return static::$sqlDeclarationCache;
+            }
+
+            public function getEnumClass(): string
+            {
+                return TestBackedEnum::class;
             }
         };
 
@@ -476,5 +462,19 @@ final class AbstractPhpEnumTypeTest extends AbstractTestCase
         $this->expectExceptionMessage('invalid enum value');
 
         $testSimpleEnumType->convertToPHPValue('ALIAS', $this->mysqlPlatform);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->mysqlPlatform = new MySQLPlatform();
+    }
+
+    protected function tearDown(): void
+    {
+        AbstractPhpEnumType::clearCache();
+
+        parent::tearDown();
     }
 }
