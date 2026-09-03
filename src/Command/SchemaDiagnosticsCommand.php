@@ -33,15 +33,39 @@ class SchemaDiagnosticsCommand
         'sqlite' => 'pdo_sqlite',
     ];
 
-    public function __construct(protected SchemaDiagnostics $diagnostics = new SchemaDiagnostics()) {}
+    protected const USAGE = "usage: doctrine-type-diagnose <database-url>\n";
 
-    /** @param list<string> $arguments */
+    /** @var array<int, string> */
+    protected const HELP_FLAG_LIST = ['--help', '-h'];
+
+    /**
+     * the streams are injectable so a test can read what the command prints; a resource has no type declaration,
+     * hence the `mixed` and the check in the accessors
+     *
+     * @param resource|null $standardOutput defaults to the process's standard output
+     * @param resource|null $standardError defaults to the process's standard error
+     */
+    public function __construct(
+        protected SchemaDiagnostics $diagnostics = new SchemaDiagnostics(),
+        protected mixed $standardOutput = null,
+        protected mixed $standardError = null,
+    ) {}
+
+    /** @param list<string> $arguments the process arguments, the first one being the script itself */
     public function run(array $arguments): int
     {
-        $databaseUrl = $arguments[1] ?? '';
+        $positionalArguments = \array_slice($arguments, 1);
 
-        if ('' === $databaseUrl) {
-            \fwrite(\STDERR, "usage: doctrine-type-diagnose <database-url>\n");
+        if ([] !== \array_intersect($positionalArguments, static::HELP_FLAG_LIST)) {
+            \fwrite($this->getStandardOutput(), static::USAGE);
+
+            return static::EXIT_SUCCESS;
+        }
+
+        $databaseUrl = $positionalArguments[0] ?? '';
+
+        if ('' === $databaseUrl || 1 !== \count($positionalArguments)) {
+            \fwrite($this->getStandardError(), static::USAGE);
 
             return static::EXIT_USAGE;
         }
@@ -52,7 +76,10 @@ class SchemaDiagnosticsCommand
             $connection = $this->createConnection($databaseUrl);
 
             if (false === $this->diagnostics->supports($connection)) {
-                \fwrite(\STDERR, "note: this platform has no introspection query, nothing was inspected\n");
+                \fwrite(
+                    $this->getStandardError(),
+                    "note: this platform has no introspection query, nothing was inspected\n",
+                );
 
                 return static::EXIT_SUCCESS;
             }
@@ -60,7 +87,7 @@ class SchemaDiagnosticsCommand
             $diagnostics = $this->diagnostics->inspect($connection);
 
             foreach ($diagnostics as $diagnostic) {
-                \fwrite(\STDOUT, \sprintf(
+                \fwrite($this->getStandardOutput(), \sprintf(
                     "%s\t%s.%s\t%s\t%s\n",
                     $diagnostic->severity,
                     $diagnostic->table,
@@ -72,7 +99,7 @@ class SchemaDiagnosticsCommand
 
             return 0 === \count($diagnostics) ? static::EXIT_SUCCESS : static::EXIT_DIAGNOSTICS_FOUND;
         } catch (Throwable $throwable) {
-            \fwrite(\STDERR, \sprintf("error: %s\n", $throwable->getMessage()));
+            \fwrite($this->getStandardError(), \sprintf("error: %s\n", $throwable->getMessage()));
 
             return static::EXIT_FAILURE;
         } finally {
@@ -85,5 +112,17 @@ class SchemaDiagnosticsCommand
         return DriverManager::getConnection(
             (new DsnParser(static::DRIVER_SCHEME_MAP))->parse($databaseUrl),
         );
+    }
+
+    /** @return resource */
+    protected function getStandardOutput()
+    {
+        return true === \is_resource($this->standardOutput) ? $this->standardOutput : \STDOUT;
+    }
+
+    /** @return resource */
+    protected function getStandardError()
+    {
+        return true === \is_resource($this->standardError) ? $this->standardError : \STDERR;
     }
 }

@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace PrecisionSoft\Doctrine\Type\Test\Functional;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Schema\TableDiff;
 use Doctrine\DBAL\Types\Type;
@@ -25,6 +26,7 @@ use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedEnumType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestBackedSetType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestIntBackedEnumType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnumType;
+use PrecisionSoft\Doctrine\Type\Test\Utility\TestPortableEnumType;
 use PrecisionSoft\Doctrine\Type\TinyintType;
 use PrecisionSoft\Doctrine\Type\UnsignedTinyintType;
 
@@ -33,17 +35,6 @@ use PrecisionSoft\Doctrine\Type\UnsignedTinyintType;
 final class SchemaStabilityFunctionalTest extends TestCase
 {
     private ?Connection $connection = null;
-
-    protected function tearDown(): void
-    {
-        if (null !== $this->connection) {
-            IntegrationDatabase::dropTable($this->connection, IntegrationDatabase::TABLE_NAME);
-            $this->connection->close();
-            $this->connection = null;
-        }
-
-        parent::tearDown();
-    }
 
     #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testEnumColumnsNeverSettle(string $environmentVariable): void
@@ -174,6 +165,36 @@ final class SchemaStabilityFunctionalTest extends TestCase
         );
     }
 
+    /**
+     * the portable CHECK lives inside the column declaration and DBAL compares declarations as strings, so off
+     * MySQL the desired column can never equal the introspected VARCHAR — documented in the README, pinned here
+     */
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderPostgreSqlEngine')]
+    public function testThePortableEnumNeverSettlesOnPostgresql(string $environmentVariable): void
+    {
+        $connection = $this->boot($environmentVariable);
+
+        $table = $this->createProbeTable($connection, 'status', TestPortableEnumType::getDefaultName(), ['length' => 32]);
+
+        static::assertFalse(
+            $this->compare($connection, $table)->isEmpty(),
+            'the portable enum unexpectedly round-trips on postgresql — the known limitation may be fixed',
+        );
+    }
+
+    public function testThePortableEnumNeverSettlesOnSqlite(): void
+    {
+        $this->connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        IntegrationDatabase::registerTypes();
+
+        $table = $this->createProbeTable($this->connection, 'status', TestPortableEnumType::getDefaultName(), ['length' => 32]);
+
+        static::assertFalse(
+            $this->compare($this->connection, $table)->isEmpty(),
+            'the portable enum unexpectedly round-trips on sqlite — the known limitation may be fixed',
+        );
+    }
+
     /** separate process because the type map is global: registering this type invalidates every test above */
     #[RunInSeparateProcess]
     #[PreserveGlobalState(false)]
@@ -193,6 +214,17 @@ final class SchemaStabilityFunctionalTest extends TestCase
             $this->compare($connection, $table)->isEmpty(),
             'claiming the database type must make the round trip stable',
         );
+    }
+
+    protected function tearDown(): void
+    {
+        if (null !== $this->connection) {
+            IntegrationDatabase::dropTable($this->connection, IntegrationDatabase::TABLE_NAME);
+            $this->connection->close();
+            $this->connection = null;
+        }
+
+        parent::tearDown();
     }
 
     private function boot(string $environmentVariable): Connection

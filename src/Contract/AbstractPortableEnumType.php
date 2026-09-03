@@ -16,6 +16,10 @@ use PrecisionSoft\Doctrine\Type\Exception\Exception;
 abstract class AbstractPortableEnumType extends AbstractEnumType
 {
     /**
+     * the column name is used exactly as it arrives: DBAL passes the name it has already quoted where the
+     * platform needs quoting (a reserved word, a name declared with quotes), and leaves it bare otherwise, so
+     * quoting it here a second time would name a column that does not exist
+     *
      * @param array<int, string> $quotedValues
      * @param array<string, mixed> $column
      * @throws Exception if the column name is missing, so the constraint cannot target the wrong column
@@ -36,12 +40,7 @@ abstract class AbstractPortableEnumType extends AbstractEnumType
             throw new Exception('portable enum declarations require the column `name`');
         }
 
-        return \sprintf(
-            '%s CHECK (%s IN (%s))',
-            $declaration,
-            $platform->quoteSingleIdentifier($columnName),
-            \implode(',', $quotedValues),
-        );
+        return \sprintf('%s CHECK (%s IN (%s))', $declaration, $columnName, \implode(',', $quotedValues));
     }
 
     protected function supportsInlineCheckConstraint(AbstractPlatform $platform): bool

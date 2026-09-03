@@ -28,19 +28,6 @@ final class PortableEnumFunctionalTest extends TestCase
 
     private ?Connection $connection = null;
 
-    protected function tearDown(): void
-    {
-        if (null !== $this->connection) {
-            IntegrationDatabase::dropTable($this->connection, static::TABLE_NAME);
-            $this->connection->close();
-            $this->connection = null;
-        }
-
-        AbstractPhpEnumType::clearCache();
-
-        parent::tearDown();
-    }
-
     public function testSqliteEnforcesThePortableConstraint(): void
     {
         $this->connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
@@ -52,6 +39,34 @@ final class PortableEnumFunctionalTest extends TestCase
     public function testPostgresqlEnforcesThePortableConstraint(string $environmentVariable): void
     {
         $this->assertTheServerRejectsAValueOutsideTheEnum($this->boot($environmentVariable));
+    }
+
+    public function testSqliteConstrainsAQuotedReservedColumnName(): void
+    {
+        $this->connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+
+        $this->assertTheServerRejectsAValueOutsideTheEnum($this->connection, '"order"');
+    }
+
+    public function testSqliteConstrainsAMixedCaseColumnName(): void
+    {
+        $this->connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+
+        $this->assertTheServerRejectsAValueOutsideTheEnum($this->connection, 'Status');
+    }
+
+    /** a quoted name reaches the declaration already quoted; quoting it again names a column that does not exist */
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderPostgreSqlEngine')]
+    public function testPostgresqlConstrainsAQuotedReservedColumnName(string $environmentVariable): void
+    {
+        $this->assertTheServerRejectsAValueOutsideTheEnum($this->boot($environmentVariable), '"order"');
+    }
+
+    /** an unquoted name is folded to lower case by the server, so a quoted `"Status"` in the CHECK does not exist */
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderPostgreSqlEngine')]
+    public function testPostgresqlConstrainsAMixedCaseColumnName(string $environmentVariable): void
+    {
+        $this->assertTheServerRejectsAValueOutsideTheEnum($this->boot($environmentVariable), 'Status');
     }
 
     /** the inline CHECK travels into `ALTER TABLE ... ALTER col TYPE`, which PostgreSQL does not accept */
@@ -79,6 +94,19 @@ final class PortableEnumFunctionalTest extends TestCase
         $connection->executeStatement($alterStatements[0]);
     }
 
+    protected function tearDown(): void
+    {
+        if (null !== $this->connection) {
+            IntegrationDatabase::dropTable($this->connection, static::TABLE_NAME);
+            $this->connection->close();
+            $this->connection = null;
+        }
+
+        AbstractPhpEnumType::clearCache();
+
+        parent::tearDown();
+    }
+
     private function boot(string $environmentVariable): Connection
     {
         try {
@@ -91,21 +119,24 @@ final class PortableEnumFunctionalTest extends TestCase
     }
 
     /** through `Schema::toSql()`, so the assertion covers the DDL a consumer actually gets, not a hand-built one */
-    private function assertTheServerRejectsAValueOutsideTheEnum(Connection $connection): void
+    private function assertTheServerRejectsAValueOutsideTheEnum(Connection $connection, string $columnName = 'status'): void
     {
         IntegrationDatabase::registerTypes();
 
         $table = new Table(static::TABLE_NAME);
-        $table->addColumn('status', TestPortableEnumType::getDefaultName(), ['length' => 32, 'notnull' => false]);
+        $table->addColumn($columnName, TestPortableEnumType::getDefaultName(), ['length' => 32, 'notnull' => false]);
         IntegrationDatabase::createTable($connection, $table);
 
         $quotedTable = $connection->getDatabasePlatform()->quoteSingleIdentifier(static::TABLE_NAME);
-        $connection->insert(static::TABLE_NAME, ['status' => 'first_value']);
+        $connection->insert(static::TABLE_NAME, [$columnName => 'first_value']);
 
-        static::assertSame('first_value', $connection->fetchOne('SELECT status FROM ' . $quotedTable));
+        static::assertSame(
+            'first_value',
+            $connection->fetchOne(\sprintf('SELECT %s FROM %s', $columnName, $quotedTable)),
+        );
 
         try {
-            $connection->insert(static::TABLE_NAME, ['status' => 'outside_enum']);
+            $connection->insert(static::TABLE_NAME, [$columnName => 'outside_enum']);
 
             static::fail('the server accepted a value the CHECK constraint forbids');
         } catch (DbalException $dbalException) {

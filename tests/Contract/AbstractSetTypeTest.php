@@ -35,20 +35,6 @@ final class AbstractSetTypeTest extends AbstractTestCase
         return new MockDto(stdClass::class);
     }
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->mysqlPlatform = new MySQLPlatform();
-    }
-
-    protected function tearDown(): void
-    {
-        AbstractPhpEnumType::clearCache();
-
-        parent::tearDown();
-    }
-
     public function testConvertToDatabaseValueNull(): void
     {
         $testBackedSetType = new TestBackedSetType();
@@ -556,5 +542,19 @@ final class AbstractSetTypeTest extends AbstractTestCase
         $phpValue = $anonymousSetType->convertToPHPValue(['a', 'b'], $this->mysqlPlatform);
 
         static::assertSame(['a', 'b'], $phpValue);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->mysqlPlatform = new MySQLPlatform();
+    }
+
+    protected function tearDown(): void
+    {
+        AbstractPhpEnumType::clearCache();
+
+        parent::tearDown();
     }
 }

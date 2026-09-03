@@ -12,11 +12,13 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use PrecisionSoft\Doctrine\Type\Exception\Exception;
 
 class SchemaDiagnostics
 {
     /**
      * @return list<Diagnostic>
+     * @throws Exception if the connection names no database, because both queries filter on the current one
      * @throws DbalException if the schema cannot be read
      */
     public function inspect(Connection $connection): array
@@ -71,12 +73,20 @@ class SchemaDiagnostics
 
     /**
      * @return list<array{table: string, column: string, databaseType: string, unsigned: bool}>
+     * @throws Exception if the connection names no database
      * @throws DbalException if the schema cannot be read
      */
     protected function listDatabaseColumns(Connection $connection): array
     {
         if (false === $this->supports($connection)) {
             return [];
+        }
+
+        /* `DATABASE()` and `current_schema()` are null on such a connection: the query matches nothing and the schema looks clean */
+        $databaseName = $connection->getParams()['dbname'] ?? null;
+
+        if (false === \is_string($databaseName) || '' === $databaseName) {
+            throw new Exception('the connection names no database, nothing was inspected');
         }
 
         return true === $connection->getDatabasePlatform() instanceof AbstractMySQLPlatform
@@ -90,25 +100,27 @@ class SchemaDiagnostics
      */
     protected function listMySqlColumns(Connection $connection): array
     {
+        /* aliased because MySQL 8 returns `information_schema` headers in their canonical upper case whatever the query says, MariaDB as written */
         $rows = $connection->fetchAllAssociative(
-            "SELECT tableColumn.TABLE_NAME, tableColumn.COLUMN_NAME, tableColumn.DATA_TYPE, tableColumn.COLUMN_TYPE
-             FROM information_schema.COLUMNS AS tableColumn
-             INNER JOIN information_schema.TABLES AS baseTable
-                 ON baseTable.TABLE_SCHEMA = tableColumn.TABLE_SCHEMA
-                 AND baseTable.TABLE_NAME = tableColumn.TABLE_NAME
-                 AND baseTable.TABLE_TYPE = 'BASE TABLE'
-             WHERE tableColumn.TABLE_SCHEMA = DATABASE()
-             ORDER BY tableColumn.TABLE_NAME, tableColumn.ORDINAL_POSITION",
+            "SELECT tableColumn.table_name AS tableName, tableColumn.column_name AS columnName,
+                 tableColumn.data_type AS dataType, tableColumn.column_type AS columnType
+             FROM information_schema.columns AS tableColumn
+             INNER JOIN information_schema.tables AS baseTable
+                 ON baseTable.table_schema = tableColumn.table_schema
+                 AND baseTable.table_name = tableColumn.table_name
+                 AND baseTable.table_type = 'BASE TABLE'
+             WHERE tableColumn.table_schema = DATABASE()
+             ORDER BY tableColumn.table_name, tableColumn.ordinal_position",
         );
 
         $columns = [];
 
         foreach ($rows as $row) {
             $columns[] = [
-                'table' => (string)$row['TABLE_NAME'],
-                'column' => (string)$row['COLUMN_NAME'],
-                'databaseType' => \strtolower((string)$row['DATA_TYPE']),
-                'unsigned' => \str_contains(\strtolower((string)$row['COLUMN_TYPE']), 'unsigned'),
+                'table' => (string)$row['tableName'],
+                'column' => (string)$row['columnName'],
+                'databaseType' => \strtolower((string)$row['dataType']),
+                'unsigned' => \str_contains(\strtolower((string)$row['columnType']), 'unsigned'),
             ];
         }
 
@@ -121,7 +133,10 @@ class SchemaDiagnostics
      */
     protected function listPostgreSqlColumns(Connection $connection): array
     {
-        /* `udt_name` carries the user-defined type name, so the enum kind comes from `pg_type` rather than the column */
+        /*
+         * `udt_name` carries the user-defined type name, so the enum kind comes from `pg_type` rather than the column;
+         * `current_schemas(false)` is the whole `search_path`, where `current_schema()` would be its first entry only
+         */
         $rows = $connection->fetchAllAssociative(
             "SELECT tableColumn.table_name, tableColumn.column_name
              FROM information_schema.columns AS tableColumn
@@ -133,7 +148,7 @@ class SchemaDiagnostics
                  ON baseTable.table_schema = tableColumn.table_schema
                  AND baseTable.table_name = tableColumn.table_name
                  AND baseTable.table_type = 'BASE TABLE'
-             WHERE tableColumn.table_schema = current_schema() AND userType.typtype = 'e'
+             WHERE tableColumn.table_schema = ANY (current_schemas(FALSE)) AND userType.typtype = 'e'
              ORDER BY tableColumn.table_name, tableColumn.ordinal_position",
         );
 

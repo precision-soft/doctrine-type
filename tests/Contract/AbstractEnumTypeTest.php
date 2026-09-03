@@ -34,20 +34,6 @@ final class AbstractEnumTypeTest extends AbstractTestCase
         return new MockDto(stdClass::class);
     }
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->mysqlPlatform = new MySQLPlatform();
-    }
-
-    protected function tearDown(): void
-    {
-        AbstractPhpEnumType::clearCache();
-
-        parent::tearDown();
-    }
-
     public function testBackedEnumConvertToDatabaseValueNull(): void
     {
         $testBackedEnumType = new TestBackedEnumType();
@@ -205,5 +191,19 @@ final class AbstractEnumTypeTest extends AbstractTestCase
         $phpValue = $testBackedEnumType->convertToPHPValue(TestBackedEnum::second, $this->mysqlPlatform);
 
         static::assertSame(TestBackedEnum::second, $phpValue);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->mysqlPlatform = new MySQLPlatform();
+    }
+
+    protected function tearDown(): void
+    {
+        AbstractPhpEnumType::clearCache();
+
+        parent::tearDown();
     }
 }

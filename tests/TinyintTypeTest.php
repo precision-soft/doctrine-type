@@ -29,14 +29,6 @@ final class TinyintTypeTest extends AbstractTestCase
         return new MockDto(stdClass::class);
     }
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->tinyintType = new TinyintType();
-        $this->mysqlPlatform = new MySQLPlatform();
-    }
-
     public function testGetDefaultName(): void
     {
         static::assertSame('tinyint', TinyintType::getDefaultName());
@@ -399,5 +391,13 @@ final class TinyintTypeTest extends AbstractTestCase
         $this->expectExceptionMessage('out of TINYINT range');
 
         $this->tinyintType->convertToPHPValue('256', $this->mysqlPlatform);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->tinyintType = new TinyintType();
+        $this->mysqlPlatform = new MySQLPlatform();
     }
 }

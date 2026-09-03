@@ -25,24 +25,15 @@ use PrecisionSoft\Doctrine\Type\Test\Utility\TestIntBackedEnum;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestIntBackedEnumType;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnum;
 use PrecisionSoft\Doctrine\Type\Test\Utility\TestSimpleEnumType;
+use PrecisionSoft\Doctrine\Type\SignedTinyintType;
 use PrecisionSoft\Doctrine\Type\TinyintType;
+use PrecisionSoft\Doctrine\Type\UnsignedTinyintType;
 
 /** @internal */
 #[Group('integration')]
 final class ValueRoundTripFunctionalTest extends TestCase
 {
     private ?Connection $connection = null;
-
-    protected function tearDown(): void
-    {
-        if (null !== $this->connection) {
-            IntegrationDatabase::dropTable($this->connection, IntegrationDatabase::TABLE_NAME);
-            $this->connection->close();
-            $this->connection = null;
-        }
-
-        parent::tearDown();
-    }
 
     #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testBackedEnumRoundTripsThroughTheServer(string $environmentVariable): void
@@ -182,6 +173,42 @@ final class ValueRoundTripFunctionalTest extends TestCase
     }
 
     #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
+    public function testTheTinyintVariantsRoundTripAtTheirBoundaries(string $environmentVariable): void
+    {
+        $connection = $this->boot($environmentVariable);
+
+        $boundaryValuesByTypeName = [
+            SignedTinyintType::getDefaultName() => [-128, 0, 127],
+            UnsignedTinyintType::getDefaultName() => [0, 255],
+        ];
+
+        foreach ($boundaryValuesByTypeName as $typeName => $boundaryValues) {
+            foreach ($boundaryValues as $boundaryValue) {
+                $this->createProbeTable($connection, 'value_column', $typeName);
+                $connection->insert(
+                    IntegrationDatabase::TABLE_NAME,
+                    ['value_column' => $boundaryValue],
+                    ['value_column' => $typeName],
+                );
+
+                static::assertSame($boundaryValue, $this->readBack($connection, $typeName), $typeName);
+            }
+        }
+    }
+
+    /** the `Out of range` expectation below holds only on a strict server; a non-strict one clamps silently */
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
+    public function testTheServerRunsInStrictMode(string $environmentVariable): void
+    {
+        $connection = $this->boot($environmentVariable);
+
+        static::assertStringContainsString(
+            'STRICT_TRANS_TABLES',
+            (string)$connection->fetchOne('SELECT @@sql_mode'),
+        );
+    }
+
+    #[DataProviderExternal(IntegrationDatabase::class, 'dataProviderMySqlEngine')]
     public function testAValueValidForUnsignedIsRejectedByASignedColumn(string $environmentVariable): void
     {
         $connection = $this->boot($environmentVariable);
@@ -238,6 +265,17 @@ final class ValueRoundTripFunctionalTest extends TestCase
             $connection->fetchOne(\sprintf('SELECT touched FROM %s WHERE id = 2', IntegrationDatabase::TABLE_NAME)),
             'ON UPDATE CURRENT_TIMESTAMP must have rewritten the column',
         );
+    }
+
+    protected function tearDown(): void
+    {
+        if (null !== $this->connection) {
+            IntegrationDatabase::dropTable($this->connection, IntegrationDatabase::TABLE_NAME);
+            $this->connection->close();
+            $this->connection = null;
+        }
+
+        parent::tearDown();
     }
 
     private function boot(string $environmentVariable): Connection

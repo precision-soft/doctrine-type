@@ -126,11 +126,11 @@ class StatusType extends AbstractPortableEnumType
 -- MySQL and MariaDB
 status ENUM('active','inactive')
 -- PostgreSQL and SQLite
-status VARCHAR(255) CHECK ("status" IN ('active','inactive'))
+status VARCHAR(255) CHECK (status IN ('active','inactive'))
 ```
 
 The column name is what the constraint targets, so a declaration reaching a constrained platform without a
-`name` key throws `PrecisionSoft\Doctrine\Type\Exception\Exception` rather than constraining the wrong column. Doctrine always supplies it when it builds a table; a hand-rolled call to `getSQLDeclaration()` must pass it.
+`name` key throws `PrecisionSoft\Doctrine\Type\Exception\Exception` rather than constraining the wrong column. Doctrine always supplies it when it builds a table; a hand-rolled call to `getSQLDeclaration()` must pass it. The name is written into the constraint exactly as it arrives: DBAL quotes it where the platform needs quoting (a reserved word such as `order`, or a name declared with quotes) and leaves it bare otherwise, and the constraint follows that decision -- so `"order"` stays `"order"` and an unquoted `Status`, which PostgreSQL folds to `status`, is not turned into a quoted `"Status"` that would name a column the table does not have.
 
 Any platform that is neither MySQL, PostgreSQL nor SQLite gets the plain `VARCHAR` fallback, exactly what
 `AbstractEnumType` produces there. The constraint is added by `decorateSqlDeclaration()`, a hook
@@ -245,7 +245,7 @@ The variants ignore the `unsigned` column option: the type name is what decides 
 
 > **The type cannot enforce the column's half of that range.** `200` is valid for an unsigned column and out of
 > range for a signed one, and the type accepts it either way. What refuses it is the server, and only while it
-> runs in strict mode: with `STRICT_TRANS_TABLES` both MySQL 8.4 and MariaDB 11.4 raise `1264 Out of range
+> runs in strict mode: with `STRICT_TRANS_TABLES` both MySQL 8.4 and MariaDB 11.8 raise `1264 Out of range
 > value`, while a non-strict server silently clamps the value instead. Do not rely on this type to keep a
 > signed column inside `-128..127` -- use `SignedTinyintType`.
 
@@ -313,7 +313,7 @@ A custom type declares a column, but Doctrine cannot tell from the database that
 type. On introspection MySQL and MariaDB report an `enum` column as DBAL's own `enum` type, a `set` column as
 `simple_array`, and a `tinyint` column as `boolean`. The schema comparator then compares the two column declarations as strings, finds them different, and asks for an `ALTER TABLE` — one that declares exactly the column already in place.
 
-The practical effect: `doctrine:schema:update` never reports "nothing to update" for these columns, and re-issues the same no-op statement on every run. **The emitted DDL is correct** — the round trip is what is missing. Measured on MySQL 8.4 and MariaDB 11.4:
+The practical effect: `doctrine:schema:update` never reports "nothing to update" for these columns, and re-issues the same no-op statement on every run. **The emitted DDL is correct** — the round trip is what is missing. Measured on MySQL 8.4 and MariaDB 11.8, the portable enum also on PostgreSQL 18 and SQLite:
 
 | Column                                        | Round-trips |
 |-----------------------------------------------|-------------|
@@ -325,8 +325,9 @@ The practical effect: `doctrine:schema:update` never reports "nothing to update"
 | `TinyintType`, `unsigned`                     | no          |
 | `DateTimeType`, plain                         | yes         |
 | `DateTimeType`, `update`                      | no          |
+| `AbstractPortableEnumType` off MySQL          | no          |
 
-`SignedTinyintType` round-trips even on a column mapped with `options: ['unsigned' => true]`, because its declaration ignores the option. Everything unsigned lands on DBAL's `tinyint` to `boolean` mapping and never settles, exactly as the plain `TinyintType` did before.
+`SignedTinyintType` round-trips even on a column mapped with `options: ['unsigned' => true]`, because its declaration ignores the option. Everything unsigned lands on DBAL's `tinyint` to `boolean` mapping and never settles, exactly as the plain `TinyintType` did before. `AbstractPortableEnumType` behaves like `AbstractEnumType` on MySQL and never settles on PostgreSQL or SQLite either: its `CHECK` is part of the column declaration DBAL compares, and the introspected column is a plain `VARCHAR`, so the comparator asks for the same `ALTER` on every run (the one PostgreSQL refuses, see *Portable Enum*). The integration suite pins both halves.
 
 If a settled schema matters to you, declare which database type your type owns. DBAL asks every registered type for this and uses the answer when it introspects, so both sides of the comparison are then produced by the same declaration code:
 
@@ -445,11 +446,11 @@ warning	orders.status	enum	Do not map this database type globally; map only this
 warning	orders.priority	tinyint	Use SignedTinyintType for conversion-time range enforcement; keep database type mapping column-specific.
 ```
 
-Output is tab-separated, one column per line, on standard output; errors go to standard error. The exit code is `0` when nothing was reported, `1` when at least one diagnostic was, `2` for a missing argument and `3` for a failure, so it drops into a pipeline as it is.
+Output is tab-separated, one column per line, on standard output; errors go to standard error. The exit code is `0` when nothing was reported, `1` when at least one diagnostic was, `2` for a missing or surplus argument and `3` for a failure, so it drops into a pipeline as it is; `--help` (or `-h`) prints the usage on standard output and exits with `0`. The url must name a database: both introspection queries filter on the current one, so a url without a path would inspect nothing, and rather than report such a schema as clean the command fails with `error: the connection names no database, nothing was inspected`.
 
 The introspection reads `information_schema` rather than Doctrine's type map, because that map is exactly what hides the problem: DBAL resolves a MySQL `tinyint` column to `boolean` and a `set` column to `simple_array`, so a diagnostic built on the mapped type would never see either. MySQL and MariaDB report `enum`, `set` and
 `tinyint` columns (the last split by signedness); PostgreSQL reports columns backed by a `CREATE TYPE ... AS
-ENUM`. Only base tables are inspected -- a view projects a column it cannot redefine, so no type mapping could act on the advice.
+ENUM` in every schema on the connection's `search_path`, not only the first one. A domain over such a type and an array of it are not reported. Only base tables are inspected -- a view projects a column it cannot redefine, so no type mapping could act on the advice.
 
 Any other platform has no introspection query. `supports()` answers that up front, `inspect()` returns an empty list, and the command says so on standard error instead of exiting quietly as if the schema were clean:
 
@@ -457,6 +458,10 @@ Any other platform has no introspection query. `supports()` answers that up fron
 vendor/bin/doctrine-type-diagnose "sqlite:///app.db"
 note: this platform has no introspection query, nothing was inspected
 ```
+
+## Example application
+
+A runnable product catalogue lives under [`.example/`](./.example/README.md): two tables declared once with every type this package ships — `AbstractPortableEnumType`, `AbstractEnumType`, `AbstractSetType`, `SignedTinyintType`, `UnsignedTinyintType` and `DateTimeType` with `update` — created, written, read, diffed and diagnosed on MySQL, MariaDB, PostgreSQL and SQLite, with the schema churn of the *Schema Stability* table asserted as expected output and `vendor/bin/doctrine-type-diagnose` run as a process. It installs the package from the working tree through a path repository, so it always tests the code as it stands; run it with `.dev/validate/all.sh --example` (which starts the databases) or `cd .example && composer install && composer check`. The directory is `export-ignore`d and never reaches a consumer's `vendor/`.
 
 ## Dev
 
@@ -475,7 +480,7 @@ Run the full gate the way the pre-commit hook runs it - the CI workflow in
 ```shell
 .dev/validate/all.sh
 .dev/validate/all.sh --audit    # also audits the locked dependencies ( needs the network )
-.dev/validate/all.sh --staged   # what the pre-commit hook runs: nothing unless the index carries php
+.dev/validate/all.sh --staged   # what the pre-commit hook runs: nothing unless the index carries php or the binary
 ```
 
 Mutation testing is opt-in for the same reason, plus cost - it runs the suite once per mutant:

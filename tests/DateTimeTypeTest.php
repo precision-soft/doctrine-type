@@ -29,14 +29,6 @@ final class DateTimeTypeTest extends AbstractTestCase
         return new MockDto(stdClass::class);
     }
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->dateTimeType = new DateTimeType();
-        $this->mysqlPlatform = new MySQLPlatform();
-    }
-
     public function testGetSqlDeclarationDefault(): void
     {
         $sqlDeclaration = $this->dateTimeType->getSQLDeclaration([], $this->mysqlPlatform);
@@ -135,5 +127,13 @@ final class DateTimeTypeTest extends AbstractTestCase
         $this->expectException(InvalidFormat::class);
 
         $this->dateTimeType->convertToPHPValue('not-valid-datetime', $this->mysqlPlatform);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->dateTimeType = new DateTimeType();
+        $this->mysqlPlatform = new MySQLPlatform();
     }
 }
